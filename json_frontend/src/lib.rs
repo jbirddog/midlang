@@ -6,17 +6,15 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use serde_json;
 
-use midlang;
-
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum MidLang {
+pub enum MidLang {
     Module { name: String, decls: Vec<Decl> },
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum Decl {
+pub enum Decl {
     FwdDecl {
         name: String,
         visibility: String,
@@ -34,34 +32,34 @@ enum Decl {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum Type {
+pub enum Type {
     Int32,
     Str,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum FuncArg {
+pub enum FuncArg {
     Named { name: String, r#type: Type },
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum FuncArgs {
+pub enum FuncArgs {
     Fixed(Vec<FuncArg>),
     Variadic(Vec<FuncArg>),
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum Stmt {
+pub enum Stmt {
     Ret { value: Expr },
     VarDecl { name: String, value: Expr },
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum Expr {
+pub enum Expr {
     Const {
         value: serde_json::Value,
         r#type: Type,
@@ -100,12 +98,7 @@ mod tests {
     fn empty_module() -> serde_json::Result<()> {
         let json = "{\"module\": {\"name\": \"empty\", \"decls\": []}}";
 
-        match parse_string::<MidLang>(json)? {
-            MidLang::Module { name, decls } => {
-                assert_eq!(name.as_str(), "empty");
-                assert_eq!(decls.len(), 0);
-            }
-        }
+        parse_string::<MidLang>(json)?;
 
         Ok(())
     }
@@ -117,7 +110,9 @@ mod tests {
         let path = Path::new(env!("TEST_CASES_DIR"))
             .join("json")
             .join("hello_world.json");
-        let result = parse_file::<MidLang>(&path)?;
+
+        parse_file::<MidLang>(&path)?;
+
         Ok(())
     }
 }

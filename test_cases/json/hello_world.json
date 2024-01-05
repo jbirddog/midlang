@@ -7,7 +7,7 @@
 		    "name": "puts",
 		    "visibility": "public",
 		    "type": "int32",
-		    "args": { "fixed": [{ "named": { "name": "s", "type": "str"}}] }
+		    "args": { "fixed": [ { "named": { "name": "s", "type": "str" } } ] }
 		}
 	    },
 	    {
@@ -16,7 +16,20 @@
 		    "visibility": "public",
 		    "type": "int32",
 		    "args": { "fixed": [] },
-		    "stmts": []
+		    "stmts": [
+			{
+			    "vardecl": {
+				"name": "r",
+				"value": {
+				    "funccall": {
+					"name": "puts",
+					"type": "int32",
+					"args": [ { "const": { "value": "hello world", "type": "str" } } ]
+				    }
+				}
+			    }
+			}
+		    ]
 		}
 	    }
 	]
