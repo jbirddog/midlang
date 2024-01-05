@@ -2,7 +2,6 @@ early_access: true
 reviews:
   path_filters:
     - "!qbe/"
-    - "!process-models/"
   auto_review:
     enabled: true
 chat:
