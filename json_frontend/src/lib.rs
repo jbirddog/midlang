@@ -30,7 +30,7 @@ mod tests {
         match parse_string::<MidLang>(json)? {
             MidLang::Module { name, decls } => {
                 assert_eq!(name.as_str(), "empty");
-		assert_eq!(decls.len(), 0);
+                assert_eq!(decls.len(), 0);
             }
         }
 
