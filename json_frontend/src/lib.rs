@@ -71,24 +71,21 @@ pub enum Expr {
     },
 }
 
-type ParseResult<T> = Result<T, Box<dyn Error>>;
+type ParseResult = Result<MidLang, Box<dyn Error>>;
 
-pub fn parse_file<T>(path: &PathBuf) -> ParseResult<T>
-where
-    T: serde::de::DeserializeOwned,
+fn parse_file(path: &PathBuf) -> ParseResult
 {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
-    let result: T = serde_json::from_reader(reader)?;
+    let result = serde_json::from_reader(reader)?;
 
     Ok(result)
 }
 
-pub fn parse_string<'a, T>(str: &'a str) -> ParseResult<T>
-where
-    T: Deserialize<'a>,
+pub fn parse_file_named(name: &str) -> ParseResult
 {
-    Ok(serde_json::from_str::<T>(str)?)
+    let path = PathBuf::from(name);
+    parse_file(&path)
 }
 
 #[cfg(test)]
@@ -97,21 +94,12 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn empty_module() -> ParseResult<()> {
-        let json = "{\"module\": {\"name\": \"empty\", \"decls\": []}}";
-
-        parse_string::<MidLang>(json)?;
-
-        Ok(())
-    }
-
-    #[test]
     fn hello_world() -> ParseResult<()> {
         let path = Path::new(env!("TEST_CASES_DIR"))
             .join("json")
             .join("hello_world.json");
 
-        parse_file::<MidLang>(&path)?;
+        parse_file(&path)?;
 
         Ok(())
     }
