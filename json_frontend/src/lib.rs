@@ -10,7 +10,63 @@ enum MidLang {
 }
 
 #[derive(Deserialize)]
-struct Decl {}
+#[serde(rename_all = "lowercase")]
+enum Decl {
+    FwdDecl {
+        name: String,
+        visibility: String,
+        r#type: Type,
+        args: FuncArgs,
+    },
+    FuncDecl {
+        name: String,
+        visibility: String,
+        r#type: Type,
+        args: FuncArgs,
+        stmts: Vec<Stmt>,
+    },
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Type {
+    Int32,
+    Str,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum FuncArg {
+    Named { name: String, r#type: Type },
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum FuncArgs {
+    Fixed(Vec<FuncArg>),
+    Variadic(Vec<FuncArg>),
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Stmt {
+    Ret { value: Expr },
+    VarDecl { name: String, value: Expr },
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Expr {
+    Const {
+        value: serde_json::Value,
+        r#type: Type,
+    },
+    FuncCall {
+        name: String,
+        r#type: Type,
+        args: Vec<Expr>,
+    },
+}
 
 pub fn parse_string<'a, T>(str: &'a str) -> serde_json::Result<T>
 where
