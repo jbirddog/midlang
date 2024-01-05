@@ -5,7 +5,7 @@ ME := $(MY_USER):$(MY_GROUP)
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
 DOCKER_IMG := midlang
-DOCKER_RUN_COMMON := --env RUSTFLAGS=$(RUSTFLAGS) --env-file ./docker.env -v .:/app $(DOCKER_IMG)
+DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .:/app $(DOCKER_IMG)
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
