@@ -8,29 +8,26 @@ pub enum Visibility {
     Private,
 }
 
-type Name = String;
-type Stmts = Box<[Stmt]>;
-
-pub struct FuncArg {
-    name: String,
+pub struct FuncArg<'a> {
+    name: &'a str,
     r#type: Type,
 }
 
-pub enum FuncArgs {
+pub enum FuncArgs<'a> {
     None,
-    Fixed(Box<[FuncArg]>),
-    Variadic(FuncArg, Box<[FuncArg]>),
+    Fixed(&'a [FuncArg<'a>]),
+    Variadic(FuncArg<'a>, &'a [FuncArg<'a>]),
 }
 
-pub struct Module {
-    name: String,
-    decls: Box<[Decl]>,
+pub struct Module<'a> {
+    name: &'a str,
+    decls: &'a [Decl<'a>],
 }
 
-pub enum Decl {
-    Extern(Name, Type, FuncArgs),
-    FwdDecl(Name, Visibility, Type, FuncArgs),
-    FuncDecl(Name, Visibility, Type, FuncArgs, Stmts),
+pub enum Decl<'a> {
+    Extern(&'a str, Type, FuncArgs<'a>),
+    FwdDecl(&'a str, Visibility, Type, FuncArgs<'a>),
+    FuncDecl(&'a str, Visibility, Type, FuncArgs<'a>, &'a [Stmt]),
 }
 
 pub enum Stmt {
@@ -38,5 +35,42 @@ pub enum Stmt {
 }
 
 pub enum Expr {
-    ConstInt32(i32),
+    Int32(i32),
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+
+    pub mod hello_world {
+        use super::*;
+
+        pub const MODULE: Module = Module {
+            name: "hello_world",
+            decls: &[
+                Decl::Extern(
+                    "puts",
+                    Type::Int32,
+                    FuncArgs::Fixed(&[FuncArg {
+                        name: "s",
+                        r#type: Type::Str,
+                    }]),
+                ),
+                Decl::FuncDecl(
+                    "main",
+                    Visibility::Public,
+                    Type::Int32,
+                    FuncArgs::None,
+                    &[Stmt::Ret(Expr::Int32(0))],
+                ),
+            ],
+        };
+
+        #[test]
+        fn test_structure() {
+            let m = hello_world::MODULE;
+            assert_eq!(m.name, "hello_world");
+            assert_eq!(m.decls.len(), 2);
+        }
+    }
 }
