@@ -19,13 +19,13 @@ pub enum JSONLang {
 pub enum Decl {
     FwdDecl {
         name: String,
-        visibility: String,
+        visibility: Visibility,
         r#type: Type,
         args: FuncArgs,
     },
     FuncDecl {
         name: String,
-        visibility: String,
+        visibility: Visibility,
         r#type: Type,
         args: FuncArgs,
         stmts: Vec<Stmt>,
@@ -37,6 +37,13 @@ pub enum Decl {
 pub enum Type {
     Int32,
     Str,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Visibility {
+    Public,
+    Private,
 }
 
 #[derive(Deserialize)]
@@ -140,17 +147,38 @@ fn lower_decl<'a>(decl: &Decl) -> Result<m::Decl<'a>, Box<dyn Error>> {
 }
 
 fn lower_func_args<'a>(
-    args: &'a FuncArgs,
-    ctx: &'a mut LoweringCtx<'a>,
+    _args: &'a FuncArgs,
+    _ctx: &'a mut LoweringCtx<'a>,
 ) -> Result<&'a m::FuncArgs<'a>, Box<dyn Error>> {
     todo!();
 }
 
+fn lower_stmts<'a>(
+    _stmts: &'a [Stmt],
+    _ctx: &'a mut LoweringCtx<'a>,
+) -> Result<&'a [m::Stmt<'a>], Box<dyn Error>> {
+    todo!();
+}
+
 fn lower_exprs<'a>(
-    decls: &'a [Expr],
-    ctx: &'a mut LoweringCtx<'a>,
+    _exprs: &'a [Expr],
+    _ctx: &'a mut LoweringCtx<'a>,
 ) -> Result<&'a [m::Expr<'a>], Box<dyn Error>> {
     todo!();
+}
+
+fn lower_type(r#type: Type) -> m::Type {
+    match r#type {
+        Type::Int32 => m::Type::Int32,
+        Type::Str => m::Type::Str,
+    }
+}
+
+fn lower_visibility(visibility: Visibility) -> m::Visibility {
+    match visibility {
+        Visibility::Public => m::Visibility::Public,
+        Visibility::Private => m::Visibility::Private,
+    }
 }
 
 #[cfg(test)]
