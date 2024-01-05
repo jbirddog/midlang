@@ -8,7 +8,7 @@ IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
 
-all: dev-env compile tests
+all: dev-env compile tests check
 
 dev-env:
 	docker build --progress=plain -t $(DOCKER_IMG) .
@@ -22,6 +22,12 @@ tests:
 fmt:
 	$(IN_DEV) cargo fmt
 
+check:
+	$(IN_DEV) cargo fmt --check
+
+start:
+	$(IN_DEV) ./target/debug/mlc
+
 sh:
 	$(IN_IDEV) /bin/sh
 
@@ -33,5 +39,5 @@ check-ownership:
 
 .PHONY: all \
 	dev-env sh \
-	compile test fmt \
+	compile test fmt check start \
 	check-ownership take-ownership
