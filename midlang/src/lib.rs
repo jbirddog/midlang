@@ -14,7 +14,6 @@ pub struct FuncArg<'a> {
 }
 
 pub enum FuncArgs<'a> {
-    None,
     Fixed(&'a [FuncArg<'a>]),
     Variadic(FuncArg<'a>, &'a [FuncArg<'a>]),
 }
@@ -27,15 +26,18 @@ pub struct Module<'a> {
 pub enum Decl<'a> {
     Extern(&'a str, Type, FuncArgs<'a>),
     FwdDecl(&'a str, Visibility, Type, FuncArgs<'a>),
-    FuncDecl(&'a str, Visibility, Type, FuncArgs<'a>, &'a [Stmt]),
+    FuncDecl(&'a str, Visibility, Type, FuncArgs<'a>, &'a [Stmt<'a>]),
 }
 
-pub enum Stmt {
-    Ret(Expr),
+pub enum Stmt<'a> {
+    Ret(Expr<'a>),
+    VarDecl(&'a str, Expr<'a>),
 }
 
-pub enum Expr {
-    Int32(i32),
+pub enum Expr<'a> {
+    ConstInt32(i32),
+    ConstStr(&'a str),
+    FuncCall(&'a str, Type, &'a [Expr<'a>]),
 }
 
 #[cfg(test)]
@@ -60,8 +62,14 @@ pub mod test {
                     "main",
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::None,
-                    &[Stmt::Ret(Expr::Int32(0))],
+                    FuncArgs::Fixed(&[]),
+                    &[
+                        Stmt::VarDecl(
+                            "r",
+                            Expr::FuncCall("puts", Type::Int32, &[Expr::ConstStr("hello world")]),
+                        ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
                 ),
             ],
         };
