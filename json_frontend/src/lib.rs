@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use serde_json;
 
-use midlang;
+use midlang as m;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -90,29 +90,66 @@ pub fn parse_file_named(name: &str) -> ParseResult {
 
 #[derive(Default)]
 pub struct LoweringCtx<'a> {
-    pub decls: Vec<midlang::Decl<'a>>,
+    decls: Vec<m::Decl<'a>>,
 }
 
-pub fn lower<'a>(json_lang: &'a JSONLang, ctx: &'a mut LoweringCtx) -> Result<midlang::MidLang<'a>, Box<dyn Error>> {
+pub fn lower<'a>(
+    json_lang: &'a JSONLang,
+    ctx: &'a mut LoweringCtx<'a>,
+) -> Result<m::MidLang<'a>, Box<dyn Error>> {
     match json_lang {
-        JSONLang::Module { name, decls } => {
-            Ok(midlang::MidLang::Module(name, lower_decls(&decls, ctx)?))
-        }
+        JSONLang::Module { name, decls } => Ok(m::MidLang::Module(name, lower_decls(&decls, ctx)?)),
     }
 }
 
-pub fn lower_decls<'a>(decls: &'a [Decl], ctx: &'a mut LoweringCtx) -> Result<&'a [midlang::Decl<'a>], Box<dyn Error>> {
+fn lower_decls<'a>(
+    decls: &'a [Decl],
+    ctx: &'a mut LoweringCtx<'a>,
+) -> Result<&'a [m::Decl<'a>], Box<dyn Error>> {
     let start_idx = ctx.decls.len();
+    let mut m_decls = Vec::<m::Decl>::new();
 
     for decl in decls {
+        let m_decl = lower_decl(decl)?;
+        m_decls.push(m_decl);
     }
+
+    ctx.decls.append(&mut m_decls);
 
     let end_idx = ctx.decls.len();
 
+    Ok(&ctx.decls[start_idx..end_idx])
+}
+
+fn lower_decl<'a>(decl: &Decl) -> Result<m::Decl<'a>, Box<dyn Error>> {
+    match decl {
+        Decl::FwdDecl {
+            name,
+            visibility,
+            r#type,
+            args,
+        } => todo!(),
+        Decl::FuncDecl {
+            name,
+            visibility,
+            r#type,
+            args,
+            stmts,
+        } => todo!(),
+    }
+}
+
+fn lower_func_args<'a>(
+    args: &'a FuncArgs,
+    ctx: &'a mut LoweringCtx<'a>,
+) -> Result<&'a m::FuncArgs<'a>, Box<dyn Error>> {
     todo!();
 }
 
-pub fn lower_func_args<'a>(args: &'a FuncArgs, ctx: &'a mut LoweringCtx) -> Result<&'a midlang::FuncArgs<'a>, Box<dyn Error>> {
+fn lower_exprs<'a>(
+    decls: &'a [Expr],
+    ctx: &'a mut LoweringCtx<'a>,
+) -> Result<&'a [m::Expr<'a>], Box<dyn Error>> {
     todo!();
 }
 
