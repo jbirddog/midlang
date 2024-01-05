@@ -1,14 +1,42 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+pub enum Type {
+    Int32,
+    Str,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub enum Visibility {
+    Public,
+    Private,
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+type Name = String;
+type Stmts = Box<[Stmt]>;
+
+pub struct FuncArg {
+    name: String,
+    r#type: Type,
+}
+
+pub enum FuncArgs {
+    None,
+    Fixed(Box<[FuncArg]>),
+    Variadic(FuncArg, Box<[FuncArg]>),
+}
+
+pub struct Module {
+    name: String,
+    decls: Box<[Decl]>,
+}
+
+pub enum Decl {
+    Extern(Name, Type, FuncArgs),
+    FwdDecl(Name, Visibility, Type, FuncArgs),
+    FuncDecl(Name, Visibility, Type, FuncArgs, Stmts),
+}
+
+pub enum Stmt {
+    Ret(Expr),
+}
+
+pub enum Expr {
+    ConstInt32(i32),
 }
