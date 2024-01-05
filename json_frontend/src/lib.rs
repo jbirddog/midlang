@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use serde_json;
 
-use midlang::MidLang;
+use midlang;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -88,13 +88,32 @@ pub fn parse_file_named(name: &str) -> ParseResult {
     parse_file(&path)
 }
 
-pub type LowerResult<'a> = Result<MidLang<'a>, Box<dyn Error>>;
+#[derive(Default)]
+pub struct LoweringCtx<'a> {
+    pub decls: Vec<midlang::Decl<'a>>,
+}
 
-pub fn lower(json_lang: &JSONLang) -> LowerResult {
-    let _ = MidLang::Module("bob", &[]);
+pub fn lower<'a>(json_lang: &'a JSONLang, ctx: &'a mut LoweringCtx) -> Result<midlang::MidLang<'a>, Box<dyn Error>> {
     match json_lang {
-        JSONLang::Module { name, .. } => Ok(MidLang::Module(name, &[])),
+        JSONLang::Module { name, decls } => {
+            Ok(midlang::MidLang::Module(name, lower_decls(&decls, ctx)?))
+        }
     }
+}
+
+pub fn lower_decls<'a>(decls: &'a [Decl], ctx: &'a mut LoweringCtx) -> Result<&'a [midlang::Decl<'a>], Box<dyn Error>> {
+    let start_idx = ctx.decls.len();
+
+    for decl in decls {
+    }
+
+    let end_idx = ctx.decls.len();
+
+    todo!();
+}
+
+pub fn lower_func_args<'a>(args: &'a FuncArgs, ctx: &'a mut LoweringCtx) -> Result<&'a midlang::FuncArgs<'a>, Box<dyn Error>> {
+    todo!();
 }
 
 #[cfg(test)]
