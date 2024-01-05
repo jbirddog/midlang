@@ -3,6 +3,7 @@
 members = [
     "mlc",
     "midlang",
+    "json_frontend",
 ]
 
 resolver = "2"

@@ -8,9 +8,12 @@ pub enum Visibility {
     Private,
 }
 
-pub struct FuncArg<'a> {
-    name: &'a str,
-    r#type: Type,
+pub enum MidLang<'a> {
+    Module(&'a str, &'a [Decl<'a>]),
+}
+
+pub enum FuncArg<'a> {
+    Named(&'a str, Type),
 }
 
 pub enum FuncArgs<'a> {
@@ -18,13 +21,7 @@ pub enum FuncArgs<'a> {
     Variadic(FuncArg<'a>, &'a [FuncArg<'a>]),
 }
 
-pub struct Module<'a> {
-    name: &'a str,
-    decls: &'a [Decl<'a>],
-}
-
 pub enum Decl<'a> {
-    Extern(&'a str, Type, FuncArgs<'a>),
     FwdDecl(&'a str, Visibility, Type, FuncArgs<'a>),
     FuncDecl(&'a str, Visibility, Type, FuncArgs<'a>, &'a [Stmt<'a>]),
 }
@@ -47,16 +44,14 @@ pub mod test {
     pub mod hello_world {
         use super::*;
 
-        pub const MODULE: Module = Module {
-            name: "hello_world",
-            decls: &[
-                Decl::Extern(
+        pub const MODULE: MidLang = MidLang::Module(
+            "hello_world",
+            &[
+                Decl::FwdDecl(
                     "puts",
+                    Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(&[FuncArg {
-                        name: "s",
-                        r#type: Type::Str,
-                    }]),
+                    FuncArgs::Fixed(&[FuncArg::Named("s", Type::Str)]),
                 ),
                 Decl::FuncDecl(
                     "main",
@@ -72,13 +67,14 @@ pub mod test {
                     ],
                 ),
             ],
-        };
+        );
 
         #[test]
         fn test_structure() {
-            let m = hello_world::MODULE;
-            assert_eq!(m.name, "hello_world");
-            assert_eq!(m.decls.len(), 2);
+            match hello_world::MODULE {
+                MidLang::Module("hello_world", &[_, _]) => assert!(true),
+                _ => assert!(false),
+            };
         }
     }
 }
