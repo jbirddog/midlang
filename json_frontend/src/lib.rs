@@ -1,3 +1,8 @@
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::PathBuf;
+
 use serde::Deserialize;
 use serde_json;
 
@@ -68,6 +73,17 @@ enum Expr {
     },
 }
 
+pub fn parse_file<T>(path: &PathBuf) -> Result<T, Box<dyn Error>>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let result: T = serde_json::from_reader(reader)?;
+
+    Ok(result)
+}
+
 pub fn parse_string<'a, T>(str: &'a str) -> serde_json::Result<T>
 where
     T: Deserialize<'a>,
@@ -78,6 +94,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn empty_module() -> serde_json::Result<()> {
@@ -90,6 +107,17 @@ mod tests {
             }
         }
 
+        Ok(())
+    }
+
+    type TestResult<T> = Result<T, Box<dyn Error>>;
+
+    #[test]
+    fn hello_world() -> TestResult<()> {
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("json")
+            .join("hello_world.json");
+        let result = parse_file::<MidLang>(&path)?;
         Ok(())
     }
 }
