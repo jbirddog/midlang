@@ -2,8 +2,9 @@ MY_USER := $(shell id -u)
 MY_GROUP := $(shell id -g)
 ME := $(MY_USER):$(MY_GROUP)
 
+RUSTFLAGS ?=
 DOCKER_IMG := midlang
-DOCKER_RUN_COMMON := --env-file ./docker.env -v .:/app $(DOCKER_IMG)
+DOCKER_RUN_COMMON := --env RUSTFLAGS=$(RUSTFLAGS) --env-file ./docker.env -v .:/app $(DOCKER_IMG)
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
