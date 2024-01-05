@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use serde_json;
 
+use midlang::MidLang;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum JSONLang {
@@ -71,7 +73,7 @@ pub enum Expr {
     },
 }
 
-type ParseResult = Result<JSONLang, Box<dyn Error>>;
+pub type ParseResult = Result<JSONLang, Box<dyn Error>>;
 
 fn parse_file(path: &PathBuf) -> ParseResult {
     let file = File::open(path)?;
@@ -84,6 +86,15 @@ fn parse_file(path: &PathBuf) -> ParseResult {
 pub fn parse_file_named(name: &str) -> ParseResult {
     let path = PathBuf::from(name);
     parse_file(&path)
+}
+
+pub type LowerResult<'a> = Result<MidLang<'a>, Box<dyn Error>>;
+
+pub fn lower(json_lang: &JSONLang) -> LowerResult {
+    let _ = MidLang::Module("bob", &[]);
+    match json_lang {
+        JSONLang::Module { name, .. } => Ok(MidLang::Module(name, &[])),
+    }
 }
 
 #[cfg(test)]
