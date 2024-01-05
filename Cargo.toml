@@ -2,6 +2,7 @@
 
 members = [
     "mlc",
+    "midlang",
 ]
 
 resolver = "2"
