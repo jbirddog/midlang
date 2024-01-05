@@ -8,7 +8,7 @@ use serde_json;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum MidLang {
+pub enum JSONLang {
     Module { name: String, decls: Vec<Decl> },
 }
 
@@ -71,10 +71,9 @@ pub enum Expr {
     },
 }
 
-type ParseResult = Result<MidLang, Box<dyn Error>>;
+type ParseResult = Result<JSONLang, Box<dyn Error>>;
 
-fn parse_file(path: &PathBuf) -> ParseResult
-{
+fn parse_file(path: &PathBuf) -> ParseResult {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let result = serde_json::from_reader(reader)?;
@@ -82,8 +81,7 @@ fn parse_file(path: &PathBuf) -> ParseResult
     Ok(result)
 }
 
-pub fn parse_file_named(name: &str) -> ParseResult
-{
+pub fn parse_file_named(name: &str) -> ParseResult {
     let path = PathBuf::from(name);
     parse_file(&path)
 }
@@ -93,8 +91,10 @@ mod tests {
     use super::*;
     use std::path::Path;
 
+    type TestResult = Result<(), Box<dyn Error>>;
+
     #[test]
-    fn hello_world() -> ParseResult<()> {
+    fn hello_world() -> TestResult {
         let path = Path::new(env!("TEST_CASES_DIR"))
             .join("json")
             .join("hello_world.json");
