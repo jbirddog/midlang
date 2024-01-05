@@ -38,10 +38,10 @@ pub enum Expr<'a> {
 }
 
 #[cfg(test)]
-pub mod test {
+mod test {
     use super::*;
 
-    pub mod hello_world {
+    mod hello_world {
         use super::*;
 
         pub const MODULE: MidLang = MidLang::Module(
