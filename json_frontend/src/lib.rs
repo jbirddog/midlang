@@ -189,13 +189,29 @@ fn lower_expr(expr: &Expr) -> Res<m::Expr> {
     match expr {
         Expr::Const { value, r#type } => match (value, r#type) {
             (Value::String(s), Type::Str) => Ok(m::Expr::ConstStr(s.to_string())),
-            _ => Err(Box::from("Value and type mismatch")),
+            (Value::Number(n), _) => Ok(lower_number(n, r#type)?),
+            _ => Err(Box::from("Unsupported value and type")),
         },
         Expr::FuncCall { name, r#type, args } => Ok(m::Expr::FuncCall(
             name.to_string(),
             lower_type(r#type),
             lower_exprs(args)?,
         )),
+    }
+}
+
+fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> {
+    fn as_i32(num: &serde_json::value::Number) -> Res<i32> {
+        num.as_i64()
+            .map(|i| i32::try_from(i))
+            .map(|r| r.ok())
+            .flatten()
+            .ok_or_else(|| Box::from("Number is not an Int32"))
+    }
+
+    match (num, r#type) {
+        (n, Type::Int32) => Ok(m::Expr::ConstInt32(as_i32(n)?)),
+        _ => Err(Box::from("Invalid number value and type")),
     }
 }
 
