@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde_json;
+use serde_json::Value;
 
 use midlang as m;
 
@@ -70,7 +71,7 @@ pub enum Stmt {
 #[serde(rename_all = "lowercase")]
 pub enum Expr {
     Const {
-        value: serde_json::Value,
+        value: Value,
         r#type: Type,
     },
     FuncCall {
@@ -82,17 +83,17 @@ pub enum Expr {
 
 type Res<T> = Result<T, Box<dyn Error>>;
 
+pub fn parse_file_named(name: &str) -> Res<JSONLang> {
+    let path = PathBuf::from(name);
+    parse_file(&path)
+}
+
 fn parse_file(path: &PathBuf) -> Res<JSONLang> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let result = serde_json::from_reader(reader)?;
 
     Ok(result)
-}
-
-pub fn parse_file_named(name: &str) -> Res<JSONLang> {
-    let path = PathBuf::from(name);
-    parse_file(&path)
 }
 
 pub fn lower(json_lang: &JSONLang) -> Res<m::MidLang> {
@@ -169,8 +170,33 @@ fn lower_arg(arg: &FuncArg) -> m::FuncArg {
     }
 }
 
-fn lower_stmts(_stmts: &Vec<Stmt>) -> Res<Vec<m::Stmt>> {
-    todo!()
+fn lower_stmts(stmts: &Vec<Stmt>) -> Res<Vec<m::Stmt>> {
+    stmts.iter().map(|s| lower_stmt(s)).collect()
+}
+
+fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
+    match stmt {
+        Stmt::Ret { value } => Ok(m::Stmt::Ret(lower_expr(value)?)),
+        Stmt::VarDecl { name, value } => Ok(m::Stmt::VarDecl(name.to_string(), lower_expr(value)?)),
+    }
+}
+
+fn lower_exprs(exprs: &Vec<Expr>) -> Res<Vec<m::Expr>> {
+    exprs.iter().map(|e| lower_expr(e)).collect()
+}
+
+fn lower_expr(expr: &Expr) -> Res<m::Expr> {
+    match expr {
+        Expr::Const { value, r#type } => match (value, r#type) {
+            (Value::String(s), Type::Str) => Ok(m::Expr::ConstStr(s.to_string())),
+            _ => Err(Box::from("Value and type mismatch")),
+        },
+        Expr::FuncCall { name, r#type, args } => Ok(m::Expr::FuncCall(
+            name.to_string(),
+            lower_type(r#type),
+            lower_exprs(args)?,
+        )),
+    }
 }
 
 #[cfg(test)]

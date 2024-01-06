@@ -28,6 +28,11 @@
 				    }
 				}
 			    }
+			},
+			{
+			    "ret": {
+				"value": { "const": { "value": 0, "type": "int32" } }
+			    }
 			}
 		    ]
 		}
