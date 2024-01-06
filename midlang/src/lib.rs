@@ -8,31 +8,31 @@ pub enum Visibility {
     Private,
 }
 
-pub enum MidLang<'a> {
-    Module(&'a str, &'a [Decl<'a>]),
+pub enum MidLang {
+    Module(String, Vec<Decl>),
 }
 
-pub enum FuncArg<'a> {
-    Named(&'a str, Type),
+pub enum FuncArg {
+    Named(String, Type),
 }
 
-pub enum FuncArgs<'a> {
-    Fixed(&'a [FuncArg<'a>]),
-    Variadic(FuncArg<'a>, &'a [FuncArg<'a>]),
+pub enum FuncArgs {
+    Fixed(Vec<FuncArg>),
+    Variadic(FuncArg, Vec<FuncArg>),
 }
 
-pub enum Decl<'a> {
-    FwdDecl(&'a str, Visibility, Type, FuncArgs<'a>),
-    FuncDecl(&'a str, Visibility, Type, FuncArgs<'a>, &'a [Stmt<'a>]),
+pub enum Decl {
+    FwdDecl(String, Visibility, Type, FuncArgs),
+    FuncDecl(String, Visibility, Type, FuncArgs, Vec<Stmt>),
 }
 
-pub enum Stmt<'a> {
-    Ret(Expr<'a>),
-    VarDecl(&'a str, Expr<'a>),
+pub enum Stmt {
+    Ret(Expr),
+    VarDecl(String, Expr),
 }
 
-pub enum Expr<'a> {
+pub enum Expr {
     ConstInt32(i32),
-    ConstStr(&'a str),
-    FuncCall(&'a str, Type, &'a [Expr<'a>]),
+    ConstStr(String),
+    FuncCall(String, Type, Vec<Expr>),
 }

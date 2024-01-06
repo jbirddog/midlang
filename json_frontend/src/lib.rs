@@ -80,9 +80,9 @@ pub enum Expr {
     },
 }
 
-pub type ParseResult = Result<JSONLang, Box<dyn Error>>;
+type Res<T> = Result<T, Box<dyn Error>>;
 
-fn parse_file(path: &PathBuf) -> ParseResult {
+fn parse_file(path: &PathBuf) -> Res<JSONLang> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let result = serde_json::from_reader(reader)?;
@@ -90,95 +90,74 @@ fn parse_file(path: &PathBuf) -> ParseResult {
     Ok(result)
 }
 
-pub fn parse_file_named(name: &str) -> ParseResult {
+pub fn parse_file_named(name: &str) -> Res<JSONLang> {
     let path = PathBuf::from(name);
     parse_file(&path)
 }
 
-#[derive(Default)]
-pub struct LoweringCtx<'a> {
-    decls: Vec<m::Decl<'a>>,
+pub fn lower(json_lang: &JSONLang) -> Res<m::MidLang> {
+    let module = match json_lang {
+        JSONLang::Module { name, decls } => {
+            m::MidLang::Module(name.to_string(), lower_decls(decls)?)
+        }
+    };
+
+    Ok(module)
 }
 
-pub fn lower<'a>(
-    json_lang: &'a JSONLang,
-    ctx: &'a mut LoweringCtx<'a>,
-) -> Result<m::MidLang<'a>, Box<dyn Error>> {
-    match json_lang {
-        JSONLang::Module { name, decls } => Ok(m::MidLang::Module(name, lower_decls(&decls, ctx)?)),
-    }
+fn lower_decls(decls: &Vec<Decl>) -> Res<Vec<m::Decl>> {
+    decls.iter().map(|d| lower_decl(d)).collect()
 }
 
-fn lower_decls<'a>(
-    decls: &'a [Decl],
-    ctx: &'a mut LoweringCtx<'a>,
-) -> Result<&'a [m::Decl<'a>], Box<dyn Error>> {
-    let start_idx = ctx.decls.len();
-    let mut m_decls = Vec::<m::Decl>::new();
-
-    for decl in decls {
-        let m_decl = lower_decl(decl)?;
-        m_decls.push(m_decl);
-    }
-
-    ctx.decls.append(&mut m_decls);
-
-    let end_idx = ctx.decls.len();
-
-    Ok(&ctx.decls[start_idx..end_idx])
-}
-
-fn lower_decl<'a>(decl: &Decl) -> Result<m::Decl<'a>, Box<dyn Error>> {
+fn lower_decl(decl: &Decl) -> Res<m::Decl> {
     match decl {
         Decl::FwdDecl {
             name,
             visibility,
             r#type,
             args,
-        } => todo!(),
+        } => Ok(m::Decl::FwdDecl(
+            name.to_string(),
+            lower_visibility(visibility),
+            lower_type(r#type),
+            lower_args(args)?,
+        )),
         Decl::FuncDecl {
             name,
             visibility,
             r#type,
             args,
             stmts,
-        } => todo!(),
+        } => Ok(m::Decl::FuncDecl(
+            name.to_string(),
+            lower_visibility(visibility),
+            lower_type(r#type),
+            lower_args(args)?,
+            lower_stmts(stmts)?,
+        )),
     }
 }
 
-fn lower_func_args<'a>(
-    _args: &'a FuncArgs,
-    _ctx: &'a mut LoweringCtx<'a>,
-) -> Result<&'a m::FuncArgs<'a>, Box<dyn Error>> {
-    todo!();
+fn lower_visibility(visibility: &Visibility) -> m::Visibility {
+    match visibility {
+        Visibility::Public => m::Visibility::Public,
+        Visibility::Private => m::Visibility::Private,
+    }
 }
 
-fn lower_stmts<'a>(
-    _stmts: &'a [Stmt],
-    _ctx: &'a mut LoweringCtx<'a>,
-) -> Result<&'a [m::Stmt<'a>], Box<dyn Error>> {
-    todo!();
-}
-
-fn lower_exprs<'a>(
-    _exprs: &'a [Expr],
-    _ctx: &'a mut LoweringCtx<'a>,
-) -> Result<&'a [m::Expr<'a>], Box<dyn Error>> {
-    todo!();
-}
-
-fn lower_type(r#type: Type) -> m::Type {
+fn lower_type(r#type: &Type) -> m::Type {
     match r#type {
         Type::Int32 => m::Type::Int32,
         Type::Str => m::Type::Str,
     }
 }
 
-fn lower_visibility(visibility: Visibility) -> m::Visibility {
-    match visibility {
-        Visibility::Public => m::Visibility::Public,
-        Visibility::Private => m::Visibility::Private,
-    }
+fn lower_args(_args: &FuncArgs) -> Res<m::FuncArgs> {
+    todo!()
+}
+
+fn lower_stmts(_stmts: &Vec<Stmt>) -> Res<Vec<m::Stmt>> {
+    todo!()
 }
 
 #[cfg(test)]

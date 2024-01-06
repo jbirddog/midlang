@@ -2,7 +2,7 @@ use std::error::Error;
 
 use clap::Parser;
 
-use json_frontend::{lower, parse_file_named, LoweringCtx};
+use json_frontend::{lower, parse_file_named};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -13,8 +13,7 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     let json_module = parse_file_named(&args.json_file)?;
-    let mut ctx: LoweringCtx = Default::default();
-    let _midlang_module = lower(&json_module, &mut ctx)?;
+    let _midlang_module = lower(&json_module)?;
 
     println!("Parsed {}", args.json_file);
 
