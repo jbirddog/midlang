@@ -56,7 +56,7 @@ pub enum FuncArg {
 #[serde(rename_all = "lowercase")]
 pub enum FuncArgs {
     Fixed(Vec<FuncArg>),
-    Variadic(Vec<FuncArg>),
+    Variadic(FuncArg, Vec<FuncArg>),
 }
 
 #[derive(Deserialize)]
@@ -120,7 +120,7 @@ fn lower_decl(decl: &Decl) -> Res<m::Decl> {
             name.to_string(),
             lower_visibility(visibility),
             lower_type(r#type),
-            lower_args(args)?,
+            lower_args(args),
         )),
         Decl::FuncDecl {
             name,
@@ -132,7 +132,7 @@ fn lower_decl(decl: &Decl) -> Res<m::Decl> {
             name.to_string(),
             lower_visibility(visibility),
             lower_type(r#type),
-            lower_args(args)?,
+            lower_args(args),
             lower_stmts(stmts)?,
         )),
     }
@@ -152,8 +152,21 @@ fn lower_type(r#type: &Type) -> m::Type {
     }
 }
 
-fn lower_args(_args: &FuncArgs) -> Res<m::FuncArgs> {
-    todo!()
+fn lower_args(args: &FuncArgs) -> m::FuncArgs {
+    fn lower(args: &Vec<FuncArg>) -> Vec<m::FuncArg> {
+        args.iter().map(|a| lower_arg(a)).collect()
+    }
+
+    match args {
+        FuncArgs::Fixed(args) => m::FuncArgs::Fixed(lower(args)),
+        FuncArgs::Variadic(first, rest) => m::FuncArgs::Variadic(lower_arg(first), lower(rest)),
+    }
+}
+
+fn lower_arg(arg: &FuncArg) -> m::FuncArg {
+    match arg {
+        FuncArg::Named { name, r#type } => m::FuncArg::Named(name.to_string(), lower_type(r#type)),
+    }
 }
 
 fn lower_stmts(_stmts: &Vec<Stmt>) -> Res<Vec<m::Stmt>> {
