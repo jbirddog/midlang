@@ -1,0 +1,42 @@
+{
+    "module": {
+	"name": "hello_world",
+	"decls": [
+	    {
+		"fwddecl": {
+		    "name": "puts",
+		    "visibility": "public",
+		    "type": "int32",
+		    "args": { "fixed": [ { "named": { "name": "s", "type": "str" } } ] }
+		}
+	    },
+	    {
+		"funcdecl": {
+		    "name": "main",
+		    "visibility": "public",
+		    "type": "int32",
+		    "args": { "fixed": [] },
+		    "stmts": [
+			{
+			    "vardecl": {
+				"name": "r",
+				"value": {
+				    "funccall": {
+					"name": "puts",
+					"type": "int32",
+					"args": [ { "const": { "value": "hello world", "type": "str" } } ]
+				    }
+				}
+			    }
+			},
+			{
+			    "ret": {
+				"value": { "const": { "value": 0, "type": "int32" } }
+			    }
+			}
+		    ]
+		}
+	    }
+	]
+    }
+}

@@ -1,0 +1,8 @@
+early_access: true
+reviews:
+  path_filters:
+    - "!qbe/"
+  auto_review:
+    enabled: true
+chat:
+  auto_reply: true
