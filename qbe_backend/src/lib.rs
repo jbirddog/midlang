@@ -43,6 +43,7 @@ pub enum Linkage {
     Export,
 }
 
+#[derive(Clone, Copy)]
 pub enum Type {
     B,
     D,
@@ -55,6 +56,28 @@ pub enum Type {
 pub enum Scope {
     Func,
     Global,
+}
+
+pub trait Typed {
+    fn r#type(&self) -> Type;
+}
+
+impl Typed for Expr {
+    fn r#type(&self) -> Type {
+        match self {
+            Expr::Value(value) => value.r#type(),
+            Expr::FuncCall(_, r#type, _) => *r#type,
+        }
+    }
+}
+
+impl Typed for Value {
+    fn r#type(&self) -> Type {
+        match self {
+            Value::ConstW(_) => Type::W,
+            Value::VarRef(_, r#type, _) => *r#type,
+        }
+    }
 }
 
 pub fn lower(midlang: &m::MidLang) -> LowerLang {
@@ -128,10 +151,17 @@ fn lower_stmts(stmts: &Vec<m::Stmt>, str_pool: &mut StringPool) -> Vec<Stmt> {
 }
 
 fn lower_exprs_to_values(
-    _exprs: &Vec<m::Expr>,
-    _str_pool: &mut StringPool,
+    exprs: &Vec<m::Expr>,
+    str_pool: &mut StringPool,
 ) -> (Vec<Stmt>, Vec<Value>) {
-    todo!()
+    let results: Vec<_> = exprs
+        .iter()
+        .map(|e| lower_expr_to_value(e, str_pool))
+        .collect();
+
+    let (stmts, values): (Vec<Vec<_>>, Vec<_>) = results.into_iter().unzip();
+
+    (stmts.into_iter().flatten().collect(), values)
 }
 
 fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
@@ -142,8 +172,14 @@ fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>,
             (vec![], Value::VarRef(name, Type::L, Scope::Global))
         }
         m::Expr::FuncCall(name, r#type, args) => {
-            let (stmts, expr) = lower_func_call(name, r#type, args, str_pool);
-            todo!()
+            let (mut stmts, expr) = lower_func_call(name, r#type, args, str_pool);
+            let r#type = expr.r#type();
+            let name = format!("a{}", stmts.len());
+
+            // todo: this isn't right, need to port the "new_name" helper
+            stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
+
+            (stmts, Value::VarRef(name, r#type, Scope::Func))
         }
     }
 }
