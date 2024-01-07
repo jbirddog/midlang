@@ -134,28 +134,41 @@ fn lower_exprs_to_values(
     todo!()
 }
 
-fn lower_expr_to_value(_expr: &m::Expr, _str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
-    todo!()
+fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
+    match expr {
+        m::Expr::ConstInt32(i) => (vec![], Value::ConstW(*i)),
+        m::Expr::ConstStr(s) => {
+            let name = str_pool.name_for_str(s);
+            (vec![], Value::VarRef(name, Type::L, Scope::Global))
+        }
+        m::Expr::FuncCall(name, r#type, args) => {
+            let (stmts, expr) = lower_func_call(name, r#type, args, str_pool);
+            todo!()
+        }
+    }
 }
 
 fn lower_expr(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Expr) {
     match expr {
-        m::Expr::ConstInt32(i) => (vec![], Expr::Value(Value::ConstW(*i))),
-        m::Expr::ConstStr(s) => {
-            let name = str_pool.name_for_str(s);
-            (
-                vec![],
-                Expr::Value(Value::VarRef(name, Type::L, Scope::Global)),
-            )
+        m::Expr::ConstInt32(_) | m::Expr::ConstStr(_) => {
+            let (stmts, value) = lower_expr_to_value(expr, str_pool);
+            (stmts, Expr::Value(value))
         }
-        m::Expr::FuncCall(name, r#type, args) => {
-            let (stmts, values) = lower_exprs_to_values(args, str_pool);
-            (
-                stmts,
-                Expr::FuncCall(name.to_string(), lower_type(r#type), values),
-            )
-        }
+        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, str_pool),
     }
+}
+
+fn lower_func_call(
+    name: &str,
+    r#type: &m::Type,
+    args: &Vec<m::Expr>,
+    str_pool: &mut StringPool,
+) -> (Vec<Stmt>, Expr) {
+    let (stmts, values) = lower_exprs_to_values(args, str_pool);
+    (
+        stmts,
+        Expr::FuncCall(name.to_string(), lower_type(r#type), values),
+    )
 }
 
 fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {
