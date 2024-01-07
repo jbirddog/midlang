@@ -23,8 +23,8 @@ pub enum Stmt {
     Jmp(String),
     Jnz(Expr, String, String),
     Lbl(String),
-    Ret(Expr),
-    VarDecl(String, Type, Scope, Expr),
+    Ret(Value),
+    VarDecl(String, Scope, Expr),
 }
 
 pub enum Expr {
@@ -96,7 +96,29 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(_stmts: &Vec<m::Stmt>) -> Vec<Stmt> {
+fn lower_stmts(stmts: &Vec<m::Stmt>) -> Vec<Stmt> {
+    stmts
+        .iter()
+        .flat_map(|s| match s {
+            m::Stmt::Ret(expr) => {
+                let (mut stmts, value) = lower_expr_to_value(expr);
+                stmts.push(Stmt::Ret(value));
+                stmts
+            }
+            m::Stmt::VarDecl(name, expr) => {
+                let (mut stmts, expr) = lower_expr(expr);
+                stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
+                stmts
+            }
+        })
+        .collect()
+}
+
+fn lower_expr(_expr: &m::Expr) -> (Vec<Stmt>, Expr) {
+    todo!()
+}
+
+fn lower_expr_to_value(_expr: &m::Expr) -> (Vec<Stmt>, Value) {
     todo!()
 }
 
