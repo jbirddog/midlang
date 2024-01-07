@@ -4,8 +4,10 @@ pub enum LowerLang {
     CompUnit(String, Vec<Decl>),
 }
 
+type DataField = (Type, String);
+
 pub enum Decl {
-    Data(String, Vec<(Type, String)>),
+    Data(String, Vec<DataField>),
     FuncDecl(String, Option<Linkage>, Type, FuncArgs, Vec<Stmt>),
 }
 
@@ -147,5 +149,40 @@ fn lower_type(r#type: &m::Type) -> Type {
     match r#type {
         m::Type::Int32 => Type::W,
         m::Type::Str => Type::L,
+    }
+}
+
+use std::collections::BTreeMap;
+
+pub struct StringPool {
+    prefix: String,
+    pool: BTreeMap<String, String>,
+}
+
+impl StringPool {
+    pub fn new(prefix: &str) -> StringPool {
+        StringPool {
+            prefix: prefix.to_string(),
+            pool: Default::default(),
+        }
+    }
+
+    pub fn name_for_str(mut self, str: &str) -> String {
+        let len = &self.pool.len();
+        self.pool
+            .entry(str.to_string())
+            .or_insert_with(|| format!("{}_{}", self.prefix, len))
+            .to_string()
+    }
+
+    pub fn as_data(self) -> Vec<Decl> {
+        fn fields(value: &str) -> Vec<DataField> {
+            vec![(Type::B, value.to_string()), (Type::B, "0".to_string())]
+        }
+
+        self.pool
+            .iter()
+            .map(|(k, v)| Decl::Data(k.to_string(), fields(v)))
+            .collect()
     }
 }
