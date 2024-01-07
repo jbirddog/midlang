@@ -60,12 +60,23 @@ pub enum Scope {
 pub fn lower(midlang: &m::MidLang) -> LowerLang {
     match midlang {
         m::MidLang::Module(name, decls) => {
-            LowerLang::CompUnit(name.to_string(), lower_decls(decls))
+            let lowered_decls = {
+                let mut str_pool = StringPool::new(name);
+                let mut lowered_decls = lower_decls(decls, &mut str_pool);
+                let mut vec = Vec::<Decl>::with_capacity(str_pool.pool.len() + lowered_decls.len());
+
+                vec.append(&mut str_pool.decls());
+                vec.append(&mut lowered_decls);
+
+                vec
+            };
+
+            LowerLang::CompUnit(name.to_string(), lowered_decls)
         }
     }
 }
 
-fn lower_decls(decls: &Vec<m::Decl>) -> Vec<Decl> {
+fn lower_decls(decls: &Vec<m::Decl>, mut str_pool: &mut StringPool) -> Vec<Decl> {
     decls
         .iter()
         .filter_map(|d| match d {
@@ -74,7 +85,7 @@ fn lower_decls(decls: &Vec<m::Decl>) -> Vec<Decl> {
                 lower_visibility(visibility),
                 lower_type(r#type),
                 lower_args(args),
-                lower_stmts(stmts),
+                lower_stmts(stmts, &mut str_pool),
             )),
             m::Decl::FwdDecl(_, _, _, _) => None,
         })
@@ -98,7 +109,7 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &Vec<m::Stmt>) -> Vec<Stmt> {
+fn lower_stmts(stmts: &Vec<m::Stmt>, _str_pool: &mut StringPool) -> Vec<Stmt> {
     stmts
         .iter()
         .flat_map(|s| match s {
@@ -175,7 +186,7 @@ impl StringPool {
             .to_string()
     }
 
-    pub fn as_data(self) -> Vec<Decl> {
+    pub fn decls(self) -> Vec<Decl> {
         fn fields(value: &str) -> Vec<DataField> {
             vec![(Type::B, value.to_string()), (Type::B, "0".to_string())]
         }
