@@ -109,17 +109,17 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &Vec<m::Stmt>, _str_pool: &mut StringPool) -> Vec<Stmt> {
+fn lower_stmts(stmts: &Vec<m::Stmt>, str_pool: &mut StringPool) -> Vec<Stmt> {
     stmts
         .iter()
         .flat_map(|s| match s {
             m::Stmt::Ret(expr) => {
-                let (mut stmts, value) = lower_expr_to_value(expr);
+                let (mut stmts, value) = lower_expr_to_value(expr, str_pool);
                 stmts.push(Stmt::Ret(value));
                 stmts
             }
             m::Stmt::VarDecl(name, expr) => {
-                let (mut stmts, expr) = lower_expr(expr);
+                let (mut stmts, expr) = lower_expr(expr, str_pool);
                 stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
                 stmts
             }
@@ -127,20 +127,29 @@ fn lower_stmts(stmts: &Vec<m::Stmt>, _str_pool: &mut StringPool) -> Vec<Stmt> {
         .collect()
 }
 
-fn lower_exprs_to_values(_exprs: &Vec<m::Expr>) -> (Vec<Stmt>, Vec<Value>) {
+fn lower_exprs_to_values(
+    _exprs: &Vec<m::Expr>,
+    _str_pool: &mut StringPool,
+) -> (Vec<Stmt>, Vec<Value>) {
     todo!()
 }
 
-fn lower_expr_to_value(_expr: &m::Expr) -> (Vec<Stmt>, Value) {
+fn lower_expr_to_value(_expr: &m::Expr, _str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
     todo!()
 }
 
-fn lower_expr(expr: &m::Expr) -> (Vec<Stmt>, Expr) {
+fn lower_expr(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Expr) {
     match expr {
         m::Expr::ConstInt32(i) => (vec![], Expr::Value(Value::ConstW(*i))),
-        m::Expr::ConstStr(_) => todo!(),
+        m::Expr::ConstStr(s) => {
+            let name = str_pool.name_for_str(s);
+            (
+                vec![],
+                Expr::Value(Value::VarRef(name, Type::L, Scope::Global)),
+            )
+        }
         m::Expr::FuncCall(name, r#type, args) => {
-            let (stmts, values) = lower_exprs_to_values(args);
+            let (stmts, values) = lower_exprs_to_values(args, str_pool);
             (
                 stmts,
                 Expr::FuncCall(name.to_string(), lower_type(r#type), values),
@@ -178,7 +187,7 @@ impl StringPool {
         }
     }
 
-    pub fn name_for_str(mut self, str: &str) -> String {
+    pub fn name_for_str(&mut self, str: &str) -> String {
         let len = &self.pool.len();
         self.pool
             .entry(str.to_string())
@@ -186,7 +195,7 @@ impl StringPool {
             .to_string()
     }
 
-    pub fn decls(self) -> Vec<Decl> {
+    pub fn decls(&self) -> Vec<Decl> {
         fn fields(value: &str) -> Vec<DataField> {
             vec![(Type::B, value.to_string()), (Type::B, "0".to_string())]
         }
