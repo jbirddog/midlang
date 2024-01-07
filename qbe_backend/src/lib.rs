@@ -1,3 +1,5 @@
+use midlang as m;
+
 pub enum LowerLang {
     CompUnit(String, Vec<Decl>),
 }
@@ -51,4 +53,50 @@ pub enum Type {
 pub enum Scope {
     Func,
     Global,
+}
+
+pub fn lower(midlang: &m::MidLang) -> LowerLang {
+    match midlang {
+        m::MidLang::Module(name, decls) => {
+            LowerLang::CompUnit(name.to_string(), lower_decls(decls))
+        }
+    }
+}
+
+fn lower_decls(decls: &Vec<m::Decl>) -> Vec<Decl> {
+    decls
+        .iter()
+        .filter_map(|d| match d {
+            m::Decl::FuncDecl(name, visibility, r#type, args, stmts) => Some(Decl::FuncDecl(
+                name.to_string(),
+                lower_visibility(visibility),
+                lower_type(r#type),
+                lower_args(args),
+                lower_stmts(stmts),
+            )),
+            m::Decl::FwdDecl(_, _, _, _) => None,
+        })
+        .collect()
+}
+
+fn lower_args(_args: &m::FuncArgs) -> FuncArgs {
+    todo!()
+}
+
+fn lower_stmts(_stmts: &Vec<m::Stmt>) -> Vec<Stmt> {
+    todo!()
+}
+
+fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {
+    match visibility {
+        m::Visibility::Public => Some(Linkage::Export),
+        m::Visibility::Private => None,
+    }
+}
+
+fn lower_type(r#type: &m::Type) -> Type {
+    match r#type {
+        m::Type::Int32 => Type::W,
+        m::Type::Str => Type::L,
+    }
 }
