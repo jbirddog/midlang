@@ -28,7 +28,7 @@ pub enum Stmt {
 }
 
 pub enum Expr {
-    Value,
+    Value(Value),
     FuncCall(String, Type, Vec<Value>),
 }
 
@@ -114,12 +114,26 @@ fn lower_stmts(stmts: &Vec<m::Stmt>) -> Vec<Stmt> {
         .collect()
 }
 
-fn lower_expr(_expr: &m::Expr) -> (Vec<Stmt>, Expr) {
+fn lower_exprs_to_values(_exprs: &Vec<m::Expr>) -> (Vec<Stmt>, Vec<Value>) {
     todo!()
 }
 
 fn lower_expr_to_value(_expr: &m::Expr) -> (Vec<Stmt>, Value) {
     todo!()
+}
+
+fn lower_expr(expr: &m::Expr) -> (Vec<Stmt>, Expr) {
+    match expr {
+        m::Expr::ConstInt32(i) => (vec![], Expr::Value(Value::ConstW(*i))),
+        m::Expr::ConstStr(_) => todo!(),
+        m::Expr::FuncCall(name, r#type, args) => {
+            let (stmts, values) = lower_exprs_to_values(args);
+            (
+                stmts,
+                Expr::FuncCall(name.to_string(), lower_type(r#type), values),
+            )
+        }
+    }
 }
 
 fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {
