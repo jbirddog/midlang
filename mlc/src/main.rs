@@ -2,9 +2,6 @@ use std::error::Error;
 
 use clap::Parser;
 
-use json_frontend;
-use qbe_backend;
-
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(short, long)]

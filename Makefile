@@ -11,7 +11,7 @@ IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
 
-all: dev-env compile tests check hello-world usage
+all: dev-env compile tests hello-world usage
 
 dev-env:
 	docker build --progress=plain -t $(DOCKER_IMG) .
@@ -25,8 +25,17 @@ tests:
 fmt:
 	$(IN_DEV) cargo fmt
 
-check:
+fmt-check:
 	$(IN_DEV) cargo fmt --check
+
+clippy:
+	$(IN_DEV) cargo clippy
+
+clippy-check:
+	$(IN_DEV) cargo clippy -- -D warnings
+
+check: fmt-check clippy-check
+	@/bin/true
 
 start:
 	$(IN_DEV) $(MLC) --json-file $(TEST_CASES_DIR)/json/hello_world.json
@@ -48,6 +57,7 @@ check-ownership:
 
 .PHONY: all \
 	dev-env sh \
-	compile test fmt check start \
+	compile test start \
+	fmt fmt-check clippy clippy-check check \
 	check-ownership take-ownership \
 	hello-world usage

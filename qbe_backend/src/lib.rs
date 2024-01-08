@@ -99,7 +99,7 @@ pub fn lower(midlang: &m::MidLang) -> LowerLang {
     }
 }
 
-fn lower_decls(decls: &Vec<m::Decl>, mut ctx: &mut LoweringCtx) -> Vec<Decl> {
+fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
     decls
         .iter()
         .filter_map(|d| match d {
@@ -108,7 +108,7 @@ fn lower_decls(decls: &Vec<m::Decl>, mut ctx: &mut LoweringCtx) -> Vec<Decl> {
                 lower_visibility(visibility),
                 lower_type(r#type),
                 lower_args(args),
-                lower_stmts(stmts, &mut ctx),
+                lower_stmts(stmts, ctx),
             )),
             m::Decl::FwdDecl(_, _, _, _) => None,
         })
@@ -116,8 +116,8 @@ fn lower_decls(decls: &Vec<m::Decl>, mut ctx: &mut LoweringCtx) -> Vec<Decl> {
 }
 
 fn lower_args(args: &m::FuncArgs) -> FuncArgs {
-    fn lower(args: &Vec<m::FuncArg>) -> Vec<FuncArg> {
-        args.iter().map(|a| lower_arg(a)).collect()
+    fn lower(args: &[m::FuncArg]) -> Vec<FuncArg> {
+        args.iter().map(lower_arg).collect()
     }
 
     match args {
@@ -132,7 +132,7 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &Vec<m::Stmt>, ctx: &mut LoweringCtx) -> Vec<Stmt> {
+fn lower_stmts(stmts: &[m::Stmt], ctx: &mut LoweringCtx) -> Vec<Stmt> {
     stmts
         .iter()
         .flat_map(|s| match s {
@@ -150,7 +150,7 @@ fn lower_stmts(stmts: &Vec<m::Stmt>, ctx: &mut LoweringCtx) -> Vec<Stmt> {
         .collect()
 }
 
-fn lower_exprs_to_values(exprs: &Vec<m::Expr>, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Vec<Value>) {
+fn lower_exprs_to_values(exprs: &[m::Expr], ctx: &mut LoweringCtx) -> (Vec<Stmt>, Vec<Value>) {
     let (stmts, values): (Vec<Vec<_>>, Vec<_>) =
         exprs.iter().map(|e| lower_expr_to_value(e, ctx)).unzip();
     let stmts = stmts.into_iter().flatten().collect();
@@ -190,7 +190,7 @@ fn lower_expr(expr: &m::Expr, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Expr) {
 fn lower_func_call(
     name: &str,
     r#type: &m::Type,
-    args: &Vec<m::Expr>,
+    args: &[m::Expr],
     ctx: &mut LoweringCtx,
 ) -> (Vec<Stmt>, Expr) {
     let (stmts, values) = lower_exprs_to_values(args, ctx);

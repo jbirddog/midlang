@@ -4,7 +4,6 @@ use std::io::BufReader;
 use std::path::PathBuf;
 
 use serde::Deserialize;
-use serde_json;
 use serde_json::Value;
 
 use midlang as m;
@@ -106,8 +105,8 @@ pub fn lower(json_lang: &JSONLang) -> Res<m::MidLang> {
     Ok(module)
 }
 
-fn lower_decls(decls: &Vec<Decl>) -> Res<Vec<m::Decl>> {
-    decls.iter().map(|d| lower_decl(d)).collect()
+fn lower_decls(decls: &[Decl]) -> Res<Vec<m::Decl>> {
+    decls.iter().map(lower_decl).collect()
 }
 
 fn lower_decl(decl: &Decl) -> Res<m::Decl> {
@@ -154,8 +153,8 @@ fn lower_type(r#type: &Type) -> m::Type {
 }
 
 fn lower_args(args: &FuncArgs) -> m::FuncArgs {
-    fn lower(args: &Vec<FuncArg>) -> Vec<m::FuncArg> {
-        args.iter().map(|a| lower_arg(a)).collect()
+    fn lower(args: &[FuncArg]) -> Vec<m::FuncArg> {
+        args.iter().map(lower_arg).collect()
     }
 
     match args {
@@ -170,8 +169,8 @@ fn lower_arg(arg: &FuncArg) -> m::FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &Vec<Stmt>) -> Res<Vec<m::Stmt>> {
-    stmts.iter().map(|s| lower_stmt(s)).collect()
+fn lower_stmts(stmts: &[Stmt]) -> Res<Vec<m::Stmt>> {
+    stmts.iter().map(lower_stmt).collect()
 }
 
 fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
@@ -181,8 +180,8 @@ fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
     }
 }
 
-fn lower_exprs(exprs: &Vec<Expr>) -> Res<Vec<m::Expr>> {
-    exprs.iter().map(|e| lower_expr(e)).collect()
+fn lower_exprs(exprs: &[Expr]) -> Res<Vec<m::Expr>> {
+    exprs.iter().map(lower_expr).collect()
 }
 
 fn lower_expr(expr: &Expr) -> Res<m::Expr> {
@@ -203,9 +202,8 @@ fn lower_expr(expr: &Expr) -> Res<m::Expr> {
 fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> {
     fn as_i32(num: &serde_json::value::Number) -> Res<i32> {
         num.as_i64()
-            .map(|i| i32::try_from(i))
-            .map(|r| r.ok())
-            .flatten()
+            .map(i32::try_from)
+            .and_then(|r| r.ok())
             .ok_or_else(|| Box::from("Number is not an Int32"))
     }
 

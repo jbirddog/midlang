@@ -8,7 +8,7 @@ COPY ./ ./
 
 RUN make install -C qbe
 
-RUN rustup component add rustfmt
+RUN rustup component add rustfmt clippy
 
 RUN \
     --mount=type=cache,target=/var/cache/cargo \

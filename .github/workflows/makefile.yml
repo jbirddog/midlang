@@ -18,5 +18,8 @@ jobs:
       with:
         submodules: true
 
-    - name: Create dev image, compile, test and check
+    - name: Create dev image, compile and test
       run: make
+
+    - name: Check fmt and clippy
+      run: make check
