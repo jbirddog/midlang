@@ -3,82 +3,13 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-use serde::Deserialize;
 use serde_json::Value;
 
 use midlang as m;
 
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum JSONLang {
-    Module { name: String, decls: Vec<Decl> },
-}
+mod json_lang;
 
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Decl {
-    FwdDecl {
-        name: String,
-        visibility: Visibility,
-        r#type: Type,
-        args: FuncArgs,
-    },
-    FuncDecl {
-        name: String,
-        visibility: Visibility,
-        r#type: Type,
-        args: FuncArgs,
-        stmts: Vec<Stmt>,
-    },
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Type {
-    Int32,
-    Str,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Visibility {
-    Public,
-    Private,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum FuncArg {
-    Named { name: String, r#type: Type },
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum FuncArgs {
-    Fixed(Vec<FuncArg>),
-    Variadic(FuncArg, Vec<FuncArg>),
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Stmt {
-    Ret { value: Expr },
-    VarDecl { name: String, value: Expr },
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Expr {
-    Const {
-        value: Value,
-        r#type: Type,
-    },
-    FuncCall {
-        name: String,
-        r#type: Type,
-        args: Vec<Expr>,
-    },
-}
+use json_lang::*;
 
 type Res<T> = Result<T, Box<dyn Error>>;
 
