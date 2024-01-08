@@ -10,3 +10,4 @@ clap = { version = "4.4.13", features = ["derive"] }
 
 json_frontend = { path = "../json_frontend" }
 midlang = { path = "../midlang" }
+qbe_backend = { "path" = "../qbe_backend" }

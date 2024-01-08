@@ -84,11 +84,11 @@ pub fn lower(midlang: &m::MidLang) -> LowerLang {
     match midlang {
         m::MidLang::Module(name, decls) => {
             let lowered_decls = {
-                let mut str_pool = StringPool::new(name);
-                let mut lowered_decls = lower_decls(decls, &mut str_pool);
-                let mut vec = Vec::<Decl>::with_capacity(str_pool.pool.len() + lowered_decls.len());
+                let mut ctx = LoweringCtx::new(name);
+                let mut lowered_decls = lower_decls(decls, &mut ctx);
+                let mut vec = Vec::<Decl>::with_capacity(ctx.pool.len() + lowered_decls.len());
 
-                vec.append(&mut str_pool.decls());
+                vec.append(&mut ctx.decls());
                 vec.append(&mut lowered_decls);
 
                 vec
@@ -99,7 +99,7 @@ pub fn lower(midlang: &m::MidLang) -> LowerLang {
     }
 }
 
-fn lower_decls(decls: &Vec<m::Decl>, mut str_pool: &mut StringPool) -> Vec<Decl> {
+fn lower_decls(decls: &Vec<m::Decl>, mut ctx: &mut LoweringCtx) -> Vec<Decl> {
     decls
         .iter()
         .filter_map(|d| match d {
@@ -108,7 +108,7 @@ fn lower_decls(decls: &Vec<m::Decl>, mut str_pool: &mut StringPool) -> Vec<Decl>
                 lower_visibility(visibility),
                 lower_type(r#type),
                 lower_args(args),
-                lower_stmts(stmts, &mut str_pool),
+                lower_stmts(stmts, &mut ctx),
             )),
             m::Decl::FwdDecl(_, _, _, _) => None,
         })
@@ -132,17 +132,17 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &Vec<m::Stmt>, str_pool: &mut StringPool) -> Vec<Stmt> {
+fn lower_stmts(stmts: &Vec<m::Stmt>, ctx: &mut LoweringCtx) -> Vec<Stmt> {
     stmts
         .iter()
         .flat_map(|s| match s {
             m::Stmt::Ret(expr) => {
-                let (mut stmts, value) = lower_expr_to_value(expr, str_pool);
+                let (mut stmts, value) = lower_expr_to_value(expr, ctx);
                 stmts.push(Stmt::Ret(value));
                 stmts
             }
             m::Stmt::VarDecl(name, expr) => {
-                let (mut stmts, expr) = lower_expr(expr, str_pool);
+                let (mut stmts, expr) = lower_expr(expr, ctx);
                 stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
                 stmts
             }
@@ -150,32 +150,26 @@ fn lower_stmts(stmts: &Vec<m::Stmt>, str_pool: &mut StringPool) -> Vec<Stmt> {
         .collect()
 }
 
-fn lower_exprs_to_values(
-    exprs: &Vec<m::Expr>,
-    str_pool: &mut StringPool,
-) -> (Vec<Stmt>, Vec<Value>) {
-    let (stmts, values): (Vec<Vec<_>>, Vec<_>) = exprs
-        .iter()
-        .map(|e| lower_expr_to_value(e, str_pool))
-        .unzip();
+fn lower_exprs_to_values(exprs: &Vec<m::Expr>, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Vec<Value>) {
+    let (stmts, values): (Vec<Vec<_>>, Vec<_>) =
+        exprs.iter().map(|e| lower_expr_to_value(e, ctx)).unzip();
     let stmts = stmts.into_iter().flatten().collect();
 
     (stmts, values)
 }
 
-fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
+fn lower_expr_to_value(expr: &m::Expr, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Value) {
     match expr {
         m::Expr::ConstInt32(i) => (vec![], Value::ConstW(*i)),
         m::Expr::ConstStr(s) => {
-            let name = str_pool.name_for_str(s);
+            let name = ctx.name_for_str(s);
             (vec![], Value::VarRef(name, Type::L, Scope::Global))
         }
         m::Expr::FuncCall(name, r#type, args) => {
-            let (mut stmts, expr) = lower_func_call(name, r#type, args, str_pool);
+            let (mut stmts, expr) = lower_func_call(name, r#type, args, ctx);
             let r#type = expr.r#type();
-            let name = format!("a{}", stmts.len());
+            let name = ctx.uniq_name("arg_");
 
-            // todo: this isn't right, need to port the "new_name" helper
             stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
 
             (stmts, Value::VarRef(name, r#type, Scope::Func))
@@ -183,13 +177,13 @@ fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>,
     }
 }
 
-fn lower_expr(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Expr) {
+fn lower_expr(expr: &m::Expr, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Expr) {
     match expr {
         m::Expr::ConstInt32(_) | m::Expr::ConstStr(_) => {
-            let (stmts, value) = lower_expr_to_value(expr, str_pool);
+            let (stmts, value) = lower_expr_to_value(expr, ctx);
             (stmts, Expr::Value(value))
         }
-        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, str_pool),
+        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, ctx),
     }
 }
 
@@ -197,9 +191,9 @@ fn lower_func_call(
     name: &str,
     r#type: &m::Type,
     args: &Vec<m::Expr>,
-    str_pool: &mut StringPool,
+    ctx: &mut LoweringCtx,
 ) -> (Vec<Stmt>, Expr) {
-    let (stmts, values) = lower_exprs_to_values(args, str_pool);
+    let (stmts, values) = lower_exprs_to_values(args, ctx);
     (
         stmts,
         Expr::FuncCall(name.to_string(), lower_type(r#type), values),
@@ -222,21 +216,29 @@ fn lower_type(r#type: &m::Type) -> Type {
 
 use std::collections::BTreeMap;
 
-pub struct StringPool {
+pub struct LoweringCtx {
     prefix: String,
     pool: BTreeMap<String, String>,
+    uniq: u32,
 }
 
-impl StringPool {
-    pub fn new(prefix: &str) -> StringPool {
-        StringPool {
+impl LoweringCtx {
+    pub fn new(prefix: &str) -> LoweringCtx {
+        LoweringCtx {
             prefix: prefix.to_string(),
             pool: Default::default(),
+            uniq: 0,
         }
     }
 
+    pub fn uniq_name(&mut self, prefix: &str) -> String {
+        let name = format!("{}{}", prefix, self.uniq);
+        self.uniq += 1;
+        name
+    }
+
     pub fn name_for_str(&mut self, str: &str) -> String {
-        let len = &self.pool.len();
+        let len = self.pool.len();
         self.pool
             .entry(str.to_string())
             .or_insert_with(|| format!("{}_{}", self.prefix, len))
