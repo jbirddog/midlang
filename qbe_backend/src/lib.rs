@@ -1,84 +1,10 @@
+mod lower_lang;
+mod lowering_context;
+
+use lower_lang::*;
+use lowering_context::LoweringCtx;
+
 use midlang as m;
-
-pub enum LowerLang {
-    CompUnit(String, Vec<Decl>),
-}
-
-type DataField = (Type, String);
-
-pub enum Decl {
-    Data(String, Vec<DataField>),
-    FuncDecl(String, Option<Linkage>, Type, FuncArgs, Vec<Stmt>),
-}
-
-pub enum FuncArgs {
-    Fixed(Vec<FuncArg>),
-    Variadic(FuncArg, Vec<FuncArg>),
-}
-
-pub enum FuncArg {
-    Named(String, Type),
-}
-
-pub enum Stmt {
-    FuncCall(String, Vec<Value>),
-    Jmp(String),
-    Jnz(Expr, String, String),
-    Lbl(String),
-    Ret(Value),
-    VarDecl(String, Scope, Expr),
-}
-
-pub enum Expr {
-    Value(Value),
-    FuncCall(String, Type, Vec<Value>),
-}
-
-pub enum Value {
-    ConstW(i32),
-    VarRef(String, Type, Scope),
-}
-
-pub enum Linkage {
-    Export,
-}
-
-#[derive(Clone, Copy)]
-pub enum Type {
-    B,
-    D,
-    H,
-    L,
-    S,
-    W,
-}
-
-pub enum Scope {
-    Func,
-    Global,
-}
-
-pub trait Typed {
-    fn r#type(&self) -> Type;
-}
-
-impl Typed for Expr {
-    fn r#type(&self) -> Type {
-        match self {
-            Expr::Value(value) => value.r#type(),
-            Expr::FuncCall(_, r#type, _) => *r#type,
-        }
-    }
-}
-
-impl Typed for Value {
-    fn r#type(&self) -> Type {
-        match self {
-            Value::ConstW(_) => Type::W,
-            Value::VarRef(_, r#type, _) => *r#type,
-        }
-    }
-}
 
 pub fn lower(midlang: &m::MidLang) -> LowerLang {
     match midlang {
@@ -86,7 +12,7 @@ pub fn lower(midlang: &m::MidLang) -> LowerLang {
             let lowered_decls = {
                 let mut ctx = LoweringCtx::new(name);
                 let mut lowered_decls = lower_decls(decls, &mut ctx);
-                let mut vec = Vec::<Decl>::with_capacity(ctx.pool.len() + lowered_decls.len());
+                let mut vec = Vec::<Decl>::with_capacity(ctx.decls_len() + lowered_decls.len());
 
                 vec.append(&mut ctx.decls());
                 vec.append(&mut lowered_decls);
@@ -211,48 +137,5 @@ fn lower_type(r#type: &m::Type) -> Type {
     match r#type {
         m::Type::Int32 => Type::W,
         m::Type::Str => Type::L,
-    }
-}
-
-use std::collections::BTreeMap;
-
-pub struct LoweringCtx {
-    prefix: String,
-    pool: BTreeMap<String, String>,
-    uniq: u32,
-}
-
-impl LoweringCtx {
-    pub fn new(prefix: &str) -> LoweringCtx {
-        LoweringCtx {
-            prefix: prefix.to_string(),
-            pool: Default::default(),
-            uniq: 0,
-        }
-    }
-
-    pub fn uniq_name(&mut self, prefix: &str) -> String {
-        let name = format!("{}{}", prefix, self.uniq);
-        self.uniq += 1;
-        name
-    }
-
-    pub fn name_for_str(&mut self, str: &str) -> String {
-        let len = self.pool.len();
-        self.pool
-            .entry(str.to_string())
-            .or_insert_with(|| format!("{}_{}", self.prefix, len))
-            .to_string()
-    }
-
-    pub fn decls(&self) -> Vec<Decl> {
-        fn fields(value: &str) -> Vec<DataField> {
-            vec![(Type::B, value.to_string()), (Type::B, "0".to_string())]
-        }
-
-        self.pool
-            .iter()
-            .map(|(k, v)| Decl::Data(k.to_string(), fields(v)))
-            .collect()
     }
 }
