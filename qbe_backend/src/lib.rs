@@ -154,14 +154,13 @@ fn lower_exprs_to_values(
     exprs: &Vec<m::Expr>,
     str_pool: &mut StringPool,
 ) -> (Vec<Stmt>, Vec<Value>) {
-    let results: Vec<_> = exprs
+    let (stmts, values): (Vec<Vec<_>>, Vec<_>) = exprs
         .iter()
         .map(|e| lower_expr_to_value(e, str_pool))
-        .collect();
+        .unzip();
+    let stmts = stmts.into_iter().flatten().collect();
 
-    let (stmts, values): (Vec<Vec<_>>, Vec<_>) = results.into_iter().unzip();
-
-    (stmts.into_iter().flatten().collect(), values)
+    (stmts, values)
 }
 
 fn lower_expr_to_value(expr: &m::Expr, str_pool: &mut StringPool) -> (Vec<Stmt>, Value) {
