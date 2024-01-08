@@ -4,6 +4,7 @@ members = [
     "mlc",
     "midlang",
     "json_frontend",
+    "qbe_backend",
 ]
 
 resolver = "2"

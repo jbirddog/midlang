@@ -1,19 +1,10 @@
-pub enum Type {
-    Int32,
-    Str,
-}
-
-pub enum Visibility {
-    Public,
-    Private,
-}
-
 pub enum MidLang {
     Module(String, Vec<Decl>),
 }
 
-pub enum FuncArg {
-    Named(String, Type),
+pub enum Decl {
+    FwdDecl(String, Visibility, Type, FuncArgs),
+    FuncDecl(String, Visibility, Type, FuncArgs, Vec<Stmt>),
 }
 
 pub enum FuncArgs {
@@ -21,9 +12,8 @@ pub enum FuncArgs {
     Variadic(FuncArg, Vec<FuncArg>),
 }
 
-pub enum Decl {
-    FwdDecl(String, Visibility, Type, FuncArgs),
-    FuncDecl(String, Visibility, Type, FuncArgs, Vec<Stmt>),
+pub enum FuncArg {
+    Named(String, Type),
 }
 
 pub enum Stmt {
@@ -35,4 +25,14 @@ pub enum Expr {
     ConstInt32(i32),
     ConstStr(String),
     FuncCall(String, Type, Vec<Expr>),
+}
+
+pub enum Visibility {
+    Public,
+    Private,
+}
+
+pub enum Type {
+    Int32,
+    Str,
 }
