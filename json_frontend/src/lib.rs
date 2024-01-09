@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
-use midlang as m;
+use midlang::middle_lang as m;
 
 mod json_lang;
 

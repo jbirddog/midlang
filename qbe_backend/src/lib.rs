@@ -4,7 +4,7 @@ mod lowering_context;
 use lower_lang::*;
 use lowering_context::LoweringCtx;
 
-use midlang as m;
+use midlang::middle_lang as m;
 
 pub fn lower(midlang: &m::MidLang) -> LowerLang {
     match midlang {
