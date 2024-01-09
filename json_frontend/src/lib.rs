@@ -40,6 +40,7 @@ impl Frontend<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use midlang::compiler::Frontend;
     use std::path::Path;
 
     type TestResult = Result<(), Box<dyn Error>>;
@@ -49,8 +50,9 @@ mod tests {
         let path = Path::new(env!("TEST_CASES_DIR"))
             .join("json")
             .join("hello_world.json");
+        let filename = &path.display().to_string();
 
-        Frontend::parse_file(&path)?;
+        new(&filename).parse()?;
 
         Ok(())
     }
