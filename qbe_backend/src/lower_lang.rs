@@ -19,10 +19,6 @@ pub enum FuncArg {
 }
 
 pub enum Stmt {
-    FuncCall(String, Vec<Value>),
-    Jmp(String),
-    Jnz(Expr, String, String),
-    Lbl(String),
     Ret(Value),
     VarDecl(String, Scope, Expr),
 }
@@ -44,10 +40,7 @@ pub enum Linkage {
 #[derive(Clone, Copy)]
 pub enum Type {
     B,
-    D,
-    H,
     L,
-    S,
     W,
 }
 

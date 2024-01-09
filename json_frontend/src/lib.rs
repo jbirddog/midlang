@@ -11,28 +11,33 @@ mod lower;
 
 use lower::lower;
 
-pub enum Frontend {}
+pub struct Frontend {}
+
+pub fn new() -> Frontend {
+    Frontend {}
+}
 
 impl compiler::Frontend for Frontend {
-    fn parse_file(path: &Path) -> Result<m::MidLang, Box<dyn Error>> {
-        let file = File::open(path)?;
-        let reader = BufReader::new(file);
-        let json_lang = serde_json::from_reader(reader)?;
-
-        lower(&json_lang)
-    }
-
-    fn parse_file_named(filename: &str) -> Result<m::MidLang, Box<dyn Error>> {
+    fn parse_file_named(&self, filename: &str) -> Result<m::MidLang, Box<dyn Error>> {
         let path = PathBuf::from(filename);
 
         Self::parse_file(&path)
     }
 }
 
+impl Frontend {
+    pub fn parse_file(path: &Path) -> Result<m::MidLang, Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let json_lang = serde_json::from_reader(reader)?;
+
+        lower(&json_lang)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use midlang::compiler::Frontend as _;
     use std::path::Path;
 
     type TestResult = Result<(), Box<dyn Error>>;
