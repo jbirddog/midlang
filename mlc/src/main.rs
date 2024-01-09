@@ -2,6 +2,8 @@ use std::error::Error;
 
 use clap::Parser;
 
+use midlang::compiler;
+
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(short, long)]
@@ -10,11 +12,9 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-    let json_module = json_frontend::parse_file_named(&args.json_file)?;
-    let midlang_module = json_frontend::lower(&json_module)?;
-    let _ = qbe_backend::lower(&midlang_module);
+    let frontend = json_frontend::new(&args.json_file);
+    let backend = qbe_backend::new();
+    let compiler = compiler::new(&frontend, &backend);
 
-    println!("Parsed {}", args.json_file);
-
-    Ok(())
+    compiler.compile()
 }
