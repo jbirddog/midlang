@@ -11,22 +11,24 @@ mod lower;
 
 use lower::lower;
 
-pub struct Frontend {}
-
-pub fn new() -> Frontend {
-    Frontend {}
+pub struct Frontend<'a> {
+    filename: &'a str,
 }
 
-impl compiler::Frontend for Frontend {
-    fn parse_file_named(&self, filename: &str) -> Result<m::MidLang, Box<dyn Error>> {
-        let path = PathBuf::from(filename);
+pub fn new(filename: &str) -> Frontend<'_> {
+    Frontend { filename }
+}
+
+impl compiler::Frontend for Frontend<'_> {
+    fn parse(&self) -> Result<m::MidLang, Box<dyn Error>> {
+        let path = PathBuf::from(self.filename);
 
         Self::parse_file(&path)
     }
 }
 
-impl Frontend {
-    pub fn parse_file(path: &Path) -> Result<m::MidLang, Box<dyn Error>> {
+impl Frontend<'_> {
+    fn parse_file(path: &Path) -> Result<m::MidLang, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let json_lang = serde_json::from_reader(reader)?;
@@ -48,7 +50,7 @@ mod tests {
             .join("json")
             .join("hello_world.json");
 
-        crate::Frontend::parse_file(&path)?;
+        Frontend::parse_file(&path)?;
 
         Ok(())
     }

@@ -12,9 +12,9 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-    let frontend = json_frontend::new();
+    let frontend = json_frontend::new(&args.json_file);
     let backend = qbe_backend::new();
     let compiler = compiler::new(&frontend, &backend);
 
-    compiler.compile(&args.json_file)
+    compiler.compile()
 }
