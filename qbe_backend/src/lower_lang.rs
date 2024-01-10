@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 pub enum LowerLang {
     CompUnit(String, Vec<Decl>),
 }
@@ -19,6 +22,7 @@ pub enum FuncArg {
 }
 
 pub enum Stmt {
+    Lbl(String),
     Ret(Value),
     VarDecl(String, Scope, Expr),
 }
@@ -67,6 +71,33 @@ impl Typed for Value {
         match self {
             Value::ConstW(_) => Type::W,
             Value::VarRef(_, r#type, _) => *r#type,
+        }
+    }
+}
+
+impl Display for Linkage {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Export => write!(f, "export"),
+        }
+    }
+}
+
+impl Display for Scope {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Func => write!(f, "%"),
+            Self::Global => write!(f, "$"),
+        }
+    }
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::B => write!(f, "b"),
+            Self::L => write!(f, "l"),
+            Self::W => write!(f, "w"),
         }
     }
 }

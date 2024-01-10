@@ -1,14 +1,18 @@
-use std::collections::HashMap;
 use std::error::Error;
 
 use crate::middle_lang::MidLang;
 
+pub type FrontendResult = Result<MidLang, Box<dyn Error>>;
+
 pub trait Frontend {
-    fn parse(&self) -> Result<MidLang, Box<dyn Error>>;
+    fn parse(&self) -> FrontendResult;
 }
 
+pub type FileNameAndContents = (String, String);
+pub type BackendResult = Result<Vec<FileNameAndContents>, Box<dyn Error>>;
+
 pub trait Backend {
-    fn generate_build_artifacts(&self, midlang: &MidLang) -> HashMap<String, String>;
+    fn generate_build_artifacts(&self, midlang: &MidLang) -> BackendResult;
 }
 
 pub struct Compiler<'a> {
@@ -22,8 +26,8 @@ pub fn new<'a>(frontend: &'a dyn Frontend, backend: &'a dyn Backend) -> Compiler
 
 impl Compiler<'_> {
     pub fn compile(&self) -> Result<(), Box<dyn Error>> {
-        let midlang_module = self.frontend.parse()?;
-        let _ = self.backend.generate_build_artifacts(&midlang_module);
+        let midlang = self.frontend.parse()?;
+        let _ = self.backend.generate_build_artifacts(&midlang)?;
 
         Ok(())
     }
