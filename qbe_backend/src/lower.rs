@@ -26,13 +26,19 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
     decls
         .iter()
         .filter_map(|d| match d {
-            m::Decl::FuncDecl(name, visibility, r#type, args, stmts) => Some(Decl::FuncDecl(
-                name.to_string(),
-                lower_visibility(visibility),
-                lower_type(r#type),
-                lower_args(args),
-                lower_stmts(stmts, ctx),
-            )),
+            m::Decl::FuncDecl(name, visibility, r#type, args, m_stmts) => {
+                let mut stmts = Vec::<Stmt>::with_capacity(m_stmts.len() * 2);
+                stmts.push(Stmt::Lbl("start".to_string()));
+                lower_stmts(m_stmts, &mut stmts, ctx);
+
+                Some(Decl::FuncDecl(
+                    name.to_string(),
+                    lower_visibility(visibility),
+                    lower_type(r#type),
+                    lower_args(args),
+                    stmts,
+                ))
+            }
             m::Decl::FwdDecl(_, _, _, _) => None,
         })
         .collect()
@@ -55,58 +61,58 @@ fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     }
 }
 
-fn lower_stmts(stmts: &[m::Stmt], ctx: &mut LoweringCtx) -> Vec<Stmt> {
-    stmts
-        .iter()
-        .flat_map(|s| match s {
+fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) {
+    for stmt in m_stmts {
+        match stmt {
             m::Stmt::Ret(expr) => {
-                let (mut stmts, value) = lower_expr_to_value(expr, ctx);
+                let value = lower_expr_to_value(expr, stmts, ctx);
                 stmts.push(Stmt::Ret(value));
-                stmts
             }
             m::Stmt::VarDecl(name, expr) => {
-                let (mut stmts, expr) = lower_expr(expr, ctx);
+                let expr = lower_expr(expr, stmts, ctx);
                 stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
-                stmts
             }
-        })
+        }
+    }
+}
+
+fn lower_exprs_to_values(
+    exprs: &[m::Expr],
+    stmts: &mut Vec<Stmt>,
+    ctx: &mut LoweringCtx,
+) -> Vec<Value> {
+    exprs
+        .iter()
+        .map(|e| lower_expr_to_value(e, stmts, ctx))
         .collect()
 }
 
-fn lower_exprs_to_values(exprs: &[m::Expr], ctx: &mut LoweringCtx) -> (Vec<Stmt>, Vec<Value>) {
-    let (stmts, values): (Vec<Vec<_>>, Vec<_>) =
-        exprs.iter().map(|e| lower_expr_to_value(e, ctx)).unzip();
-    let stmts = stmts.into_iter().flatten().collect();
-
-    (stmts, values)
-}
-
-fn lower_expr_to_value(expr: &m::Expr, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Value) {
+fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Value {
     match expr {
-        m::Expr::ConstInt32(i) => (vec![], Value::ConstW(*i)),
+        m::Expr::ConstInt32(i) => Value::ConstW(*i),
         m::Expr::ConstStr(s) => {
             let name = ctx.name_for_str(s);
-            (vec![], Value::VarRef(name, Type::L, Scope::Global))
+            Value::VarRef(name, Type::L, Scope::Global)
         }
         m::Expr::FuncCall(name, r#type, args) => {
-            let (mut stmts, expr) = lower_func_call(name, r#type, args, ctx);
+            let expr = lower_func_call(name, r#type, args, stmts, ctx);
             let r#type = expr.r#type();
             let name = ctx.uniq_name("arg_");
 
             stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
 
-            (stmts, Value::VarRef(name, r#type, Scope::Func))
+            Value::VarRef(name, r#type, Scope::Func)
         }
     }
 }
 
-fn lower_expr(expr: &m::Expr, ctx: &mut LoweringCtx) -> (Vec<Stmt>, Expr) {
+fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Expr {
     match expr {
         m::Expr::ConstInt32(_) | m::Expr::ConstStr(_) => {
-            let (stmts, value) = lower_expr_to_value(expr, ctx);
-            (stmts, Expr::Value(value))
+            let value = lower_expr_to_value(expr, stmts, ctx);
+            Expr::Value(value)
         }
-        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, ctx),
+        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, stmts, ctx),
     }
 }
 
@@ -114,13 +120,11 @@ fn lower_func_call(
     name: &str,
     r#type: &m::Type,
     args: &[m::Expr],
+    stmts: &mut Vec<Stmt>,
     ctx: &mut LoweringCtx,
-) -> (Vec<Stmt>, Expr) {
-    let (stmts, values) = lower_exprs_to_values(args, ctx);
-    (
-        stmts,
-        Expr::FuncCall(name.to_string(), lower_type(r#type), values),
-    )
+) -> Expr {
+    let values = lower_exprs_to_values(args, stmts, ctx);
+    Expr::FuncCall(name.to_string(), lower_type(r#type), values)
 }
 
 fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {

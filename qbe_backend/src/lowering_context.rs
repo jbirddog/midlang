@@ -27,18 +27,21 @@ impl LoweringCtx {
         let len = self.pool.len();
         self.pool
             .entry(str.to_string())
-            .or_insert_with(|| format!("{}_{}", self.prefix, len))
+            .or_insert_with(|| format!("{}_str{}", self.prefix, len))
             .to_string()
     }
 
     pub fn decls(&self) -> Vec<Decl> {
         fn fields(value: &str) -> Vec<DataField> {
-            vec![(Type::B, value.to_string()), (Type::B, "0".to_string())]
+            vec![
+                (Type::B, format!("\"{}\"", value)),
+                (Type::B, "0".to_string()),
+            ]
         }
 
         self.pool
             .iter()
-            .map(|(k, v)| Decl::Data(k.to_string(), fields(v)))
+            .map(|(k, v)| Decl::Data(v.to_string(), fields(k)))
             .collect()
     }
 
