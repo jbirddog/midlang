@@ -12,7 +12,6 @@ DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
-
 all: dev-env compile tests hello-world usage
 
 dev-env:
@@ -30,6 +29,10 @@ fmt:
 fmt-check:
 	$(IN_DEV) cargo fmt --check
 
+fmt-json:
+	$(IN_DEV) find $(TEST_CASES_DIR)/json -type f \
+		-exec sh -c 'jq . "{}" > /tmp/out.json && mv /tmp/out.json "{}"' \;
+
 clippy:
 	$(IN_DEV) cargo clippy
 
@@ -42,7 +45,7 @@ check: fmt-check clippy-check
 clean:
 	@rm -rf $(BUILD_DIR)
 
-start: hello-world
+start: hello-world2
 	@/bin/true
 
 hello-world:
@@ -51,6 +54,13 @@ hello-world:
 		--build-dir $(BUILD_DIR)/hello_world \
 		--ninja samu \
 	&& $(IN_DEV) $(BUILD_DIR)/hello_world/a.out
+
+hello-world2:
+	$(IN_DEV) $(MLC) \
+		--json-file $(TEST_CASES_DIR)/json/hello_world2.json \
+		--build-dir $(BUILD_DIR)/hello_world2 \
+		--ninja samu \
+	&& $(IN_DEV) $(BUILD_DIR)/hello_world2/a.out
 
 usage:
 	$(IN_DEV) $(MLC) --help
@@ -67,6 +77,6 @@ check-ownership:
 .PHONY: all \
 	dev-env sh \
 	compile test start clean \
-	fmt fmt-check clippy clippy-check check \
+	fmt fmt-check fmt-json clippy clippy-check check \
 	check-ownership take-ownership \
-	hello-world usage
+	hello-world hello-world2 usage

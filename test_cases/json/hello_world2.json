@@ -1,7 +1,56 @@
 {
   "modules": [
     {
-      "name": "hello_world",
+      "name": "hello_world2",
+      "decls": [
+        {
+          "fwddecl": {
+            "name": "say_hello_world",
+            "visibility": "public",
+            "type": "int32",
+            "args": {
+              "fixed": []
+            }
+          }
+        },
+        {
+          "funcdecl": {
+            "name": "main",
+            "visibility": "public",
+            "type": "int32",
+            "args": {
+              "fixed": []
+            },
+            "stmts": [
+              {
+                "vardecl": {
+                  "name": "r",
+                  "value": {
+                    "funccall": {
+                      "name": "say_hello_world",
+                      "type": "int32",
+                      "args": []
+                    }
+                  }
+                }
+              },
+              {
+                "ret": {
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "hello_world2_sayer",
       "decls": [
         {
           "fwddecl": {
@@ -22,7 +71,7 @@
         },
         {
           "funcdecl": {
-            "name": "main",
+            "name": "say_hello_world",
             "visibility": "public",
             "type": "int32",
             "args": {

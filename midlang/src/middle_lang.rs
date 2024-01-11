@@ -1,5 +1,6 @@
-pub enum MidLang {
-    Module(String, Vec<Decl>),
+pub struct Module {
+    pub name: String,
+    pub decls: Vec<Decl>,
 }
 
 pub enum Decl {

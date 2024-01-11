@@ -3,12 +3,13 @@ use midlang::middle_lang as m;
 use crate::lower_lang::*;
 use crate::lowering_context::LoweringCtx;
 
-pub fn lower(midlang: &m::MidLang) -> LowerLang {
-    match midlang {
-        m::MidLang::Module(name, decls) => {
+pub fn lower(modules: &[m::Module]) -> Vec<CompUnit> {
+    modules
+        .iter()
+        .map(|m| {
             let lowered_decls = {
-                let mut ctx = LoweringCtx::new(name);
-                let mut lowered_decls = lower_decls(decls, &mut ctx);
+                let mut ctx = LoweringCtx::new(&m.name);
+                let mut lowered_decls = lower_decls(&m.decls, &mut ctx);
                 let mut vec = Vec::<Decl>::with_capacity(ctx.decls_len() + lowered_decls.len());
 
                 vec.append(&mut ctx.decls());
@@ -17,9 +18,12 @@ pub fn lower(midlang: &m::MidLang) -> LowerLang {
                 vec
             };
 
-            LowerLang::CompUnit(name.to_string(), lowered_decls)
-        }
-    }
+            CompUnit {
+                name: m.name.to_string(),
+                decls: lowered_decls,
+            }
+        })
+        .collect()
 }
 
 fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {

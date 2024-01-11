@@ -8,10 +8,14 @@ use crate::lower_lang::*;
 const IL_BUFFER_CAPACITY: usize = 1024;
 const INDENT: &str = "    ";
 
-pub fn generate_il(lower_lang: &LowerLang) -> Result<BuildArtifacts, fmt::Error> {
-    match lower_lang {
-        LowerLang::CompUnit(name, decls) => Ok(vec![(filename(name), decls_il(decls)?)]),
+pub fn generate_il(comp_units: &[CompUnit]) -> Result<BuildArtifacts, fmt::Error> {
+    let mut build_artifacts = BuildArtifacts::with_capacity(comp_units.len());
+
+    for comp_unit in comp_units {
+        build_artifacts.push((filename(&comp_unit.name), decls_il(&comp_unit.decls)?));
     }
+
+    Ok(build_artifacts)
 }
 
 fn filename(name: &str) -> String {

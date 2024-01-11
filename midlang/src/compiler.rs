@@ -6,9 +6,9 @@ use std::process::Command;
 
 use ninja_writer::Ninja;
 
-use crate::middle_lang::MidLang;
+use crate::middle_lang::Module;
 
-pub type FrontendResult = Result<MidLang, Box<dyn Error>>;
+pub type FrontendResult = Result<Vec<Module>, Box<dyn Error>>;
 
 pub trait Frontend {
     fn parse(&self) -> FrontendResult;
@@ -20,7 +20,7 @@ pub type BackendResult = Result<BuildArtifacts, Box<dyn Error>>;
 pub trait Backend {
     fn generate_build_artifacts(
         &self,
-        midlang: &MidLang,
+        modules: &[Module],
         ninja_writer: &mut Ninja,
     ) -> BackendResult;
 }
@@ -48,11 +48,11 @@ pub fn new<'a>(
 
 impl Compiler<'_> {
     pub fn compile(&self) -> Result<(), Box<dyn Error>> {
-        let midlang = self.frontend.parse()?;
+        let modules = self.frontend.parse()?;
         let mut ninja_writer = Ninja::new();
         let mut build_artifacts = self
             .backend
-            .generate_build_artifacts(&midlang, &mut ninja_writer)?;
+            .generate_build_artifacts(&modules, &mut ninja_writer)?;
         build_artifacts.push(("build.ninja".to_string(), ninja_writer.to_string()));
 
         write_build_artifacts(&build_artifacts, self.build_dir)?;
