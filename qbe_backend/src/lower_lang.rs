@@ -1,8 +1,9 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-pub enum LowerLang {
-    CompUnit(String, Vec<Decl>),
+pub struct CompUnit {
+    pub name: String,
+    pub decls: Vec<Decl>,
 }
 
 pub type DataField = (Type, String);

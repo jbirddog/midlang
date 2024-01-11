@@ -2,7 +2,7 @@ FROM rust:alpine
 
 WORKDIR /app
 
-RUN apk add -U gcc musl-dev make samurai
+RUN apk add -U gcc musl-dev make samurai jq
 
 COPY ./ ./
 

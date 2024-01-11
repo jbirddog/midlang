@@ -22,11 +22,11 @@ pub fn new() -> Backend {
 impl compiler::Backend for Backend {
     fn generate_build_artifacts(
         &self,
-        midlang: &m::MidLang,
+        modules: &[m::Module],
         ninja_writer: &mut Ninja,
     ) -> compiler::BackendResult {
-        let lower_lang = lower(midlang);
-        let build_artifacts = generate_il(&lower_lang)?;
+        let comp_units = lower(modules);
+        let build_artifacts = generate_il(&comp_units)?;
 
         configure_ninja_build(&build_artifacts, ninja_writer);
 
@@ -74,9 +74,9 @@ mod tests {
 
     #[test]
     fn hello_world() -> TestResult {
-        let midlang = m::MidLang::Module(
-            "hello_world".to_string(),
-            vec![
+        let modules = [m::Module {
+            name: "hello_world".to_string(),
+            decls: vec![
                 m::Decl::FwdDecl(
                     "puts".to_string(),
                     m::Visibility::Public,
@@ -101,10 +101,10 @@ mod tests {
                     ],
                 ),
             ],
-        );
+        }];
 
         let mut ninja_writer = Ninja::new();
-        let ba = new().generate_build_artifacts(&midlang, &mut ninja_writer)?;
+        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
         assert_eq!(ba.len(), 1);
         assert_eq!(ba[0].0, "hello_world.il");
 
@@ -119,6 +119,103 @@ mod tests {
         assert!(ninja_build.contains("hello_world.il"));
         assert!(ninja_build.contains("hello_world.s"));
         assert!(ninja_build.contains("hello_world.o"));
+        assert!(ninja_build.contains("a.out"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn hello_world2() -> TestResult {
+        let modules = [
+            m::Module {
+                name: "hello_world2".to_string(),
+                decls: vec![
+                    m::Decl::FwdDecl(
+                        "say_hello_world".to_string(),
+                        m::Visibility::Public,
+                        m::Type::Int32,
+                        m::FuncArgs::Fixed(vec![]),
+                    ),
+                    m::Decl::FuncDecl(
+                        "main".to_string(),
+                        m::Visibility::Public,
+                        m::Type::Int32,
+                        m::FuncArgs::Fixed(vec![]),
+                        vec![
+                            m::Stmt::VarDecl(
+                                "r".to_string(),
+                                m::Expr::FuncCall(
+                                    "say_hello_world".to_string(),
+                                    m::Type::Int32,
+                                    vec![],
+                                ),
+                            ),
+                            m::Stmt::Ret(m::Expr::ConstInt32(0)),
+                        ],
+                    ),
+                ],
+            },
+            m::Module {
+                name: "hello_world2_sayer".to_string(),
+                decls: vec![
+                    m::Decl::FwdDecl(
+                        "puts".to_string(),
+                        m::Visibility::Public,
+                        m::Type::Int32,
+                        m::FuncArgs::Fixed(vec![m::FuncArg::Named("s".to_string(), m::Type::Str)]),
+                    ),
+                    m::Decl::FuncDecl(
+                        "say_hello_world".to_string(),
+                        m::Visibility::Public,
+                        m::Type::Int32,
+                        m::FuncArgs::Fixed(vec![]),
+                        vec![
+                            m::Stmt::VarDecl(
+                                "r".to_string(),
+                                m::Expr::FuncCall(
+                                    "puts".to_string(),
+                                    m::Type::Int32,
+                                    vec![m::Expr::ConstStr("hello world".to_string())],
+                                ),
+                            ),
+                            m::Stmt::Ret(m::Expr::ConstInt32(0)),
+                        ],
+                    ),
+                ],
+            },
+        ];
+
+        let mut ninja_writer = Ninja::new();
+        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
+        assert_eq!(ba.len(), 2);
+        assert_eq!(ba[0].0, "hello_world2.il");
+        assert_eq!(ba[1].0, "hello_world2_sayer.il");
+
+        {
+            let path = Path::new(env!("TEST_CASES_DIR"))
+                .join("qbe")
+                .join("hello_world2.il");
+            let expected_il = read_to_string(&path)?;
+
+            assert_eq!(ba[0].1, expected_il);
+        }
+
+        {
+            let path = Path::new(env!("TEST_CASES_DIR"))
+                .join("qbe")
+                .join("hello_world2_sayer.il");
+            let expected_il = read_to_string(&path)?;
+
+            assert_eq!(ba[1].1, expected_il);
+        }
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("hello_world2.il"));
+        assert!(ninja_build.contains("hello_world2.s"));
+        assert!(ninja_build.contains("hello_world2.o"));
+        assert!(ninja_build.contains("hello_world2_sayer.il"));
+        assert!(ninja_build.contains("hello_world2_sayer.s"));
+        assert!(ninja_build.contains("hello_world2_sayer.o"));
         assert!(ninja_build.contains("a.out"));
 
         Ok(())

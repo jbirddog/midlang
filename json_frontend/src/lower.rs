@@ -8,14 +8,23 @@ use crate::json_lang::*;
 
 type Res<T> = Result<T, Box<dyn Error>>;
 
-pub fn lower(json_lang: &JSONLang) -> Res<m::MidLang> {
-    let module = match json_lang {
-        JSONLang::Module { name, decls } => {
-            m::MidLang::Module(name.to_string(), lower_decls(decls)?)
+pub fn lower(json_lang: &JSONLang) -> Res<Vec<m::Module>> {
+    let modules = match json_lang {
+        JSONLang::Modules(modules) => {
+            let mut lowered = Vec::<m::Module>::with_capacity(modules.len());
+
+            for module in modules {
+                lowered.push(m::Module {
+                    name: module.name.to_string(),
+                    decls: lower_decls(&module.decls)?,
+                });
+            }
+
+            lowered
         }
     };
 
-    Ok(module)
+    Ok(modules)
 }
 
 fn lower_decls(decls: &[Decl]) -> Res<Vec<m::Decl>> {

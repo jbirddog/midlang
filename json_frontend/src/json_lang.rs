@@ -3,8 +3,15 @@ use serde_json::Value;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
+pub struct Module {
+    pub name: String,
+    pub decls: Vec<Decl>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum JSONLang {
-    Module { name: String, decls: Vec<Decl> },
+    Modules(Vec<Module>),
 }
 
 #[derive(Deserialize)]
