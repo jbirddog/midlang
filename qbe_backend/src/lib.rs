@@ -1,3 +1,8 @@
+use std::path::Path;
+
+use ninja_writer::BuildVariables as _;
+use ninja_writer::Ninja;
+
 mod il;
 mod lower;
 mod lower_lang;
@@ -15,10 +20,45 @@ pub fn new() -> Backend {
 }
 
 impl compiler::Backend for Backend {
-    fn generate_build_artifacts(&self, midlang: &m::MidLang) -> compiler::BackendResult {
+    fn generate_build_artifacts(
+        &self,
+        midlang: &m::MidLang,
+        ninja_writer: &mut Ninja,
+    ) -> compiler::BackendResult {
         let lower_lang = lower(midlang);
-        Ok(generate_il(&lower_lang)?)
+        let build_artifacts = generate_il(&lower_lang)?;
+
+        configure_ninja_build(&build_artifacts, ninja_writer);
+
+        Ok(build_artifacts)
     }
+}
+
+fn configure_ninja_build(build_artifacts: &compiler::BuildArtifacts, ninja_writer: &mut Ninja) {
+    let qbe = ninja_writer.rule("qbe", "qbe -o $out $in");
+    let cc = ninja_writer.rule("cc", "cc -o $out -c $in");
+    let link = ninja_writer.rule("link", "cc -o $out $in");
+    let output = "a.out";
+    let mut objs = Vec::<String>::with_capacity(build_artifacts.len());
+
+    for (il, _) in build_artifacts {
+        let asm = with_ext(il, "s");
+        let obj = with_ext(il, "o");
+
+        qbe.build([&asm]).with([&il]);
+        cc.build([&obj]).with([&asm]);
+        objs.push(obj);
+    }
+
+    link.build([&output]).with(&objs);
+    ninja_writer.defaults([&output]);
+}
+
+fn with_ext(filename: &str, ext: &str) -> String {
+    Path::new(filename)
+        .with_extension(ext)
+        .display()
+        .to_string()
 }
 
 #[cfg(test)]
@@ -63,7 +103,8 @@ mod tests {
             ],
         );
 
-        let ba = new().generate_build_artifacts(&midlang)?;
+        let mut ninja_writer = Ninja::new();
+        let ba = new().generate_build_artifacts(&midlang, &mut ninja_writer)?;
         assert_eq!(ba.len(), 1);
         assert_eq!(ba[0].0, "hello_world.il");
 
@@ -73,6 +114,12 @@ mod tests {
         let expected_il = read_to_string(&path)?;
 
         assert_eq!(ba[0].1, expected_il);
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("hello_world.il"));
+        assert!(ninja_build.contains("hello_world.s"));
+        assert!(ninja_build.contains("hello_world.o"));
+        assert!(ninja_build.contains("a.out"));
 
         Ok(())
     }
