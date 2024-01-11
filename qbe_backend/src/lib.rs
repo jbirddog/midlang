@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use ninja_writer::*;
+use ninja_writer::BuildVariables as _;
+use ninja_writer::Ninja;
 
 mod il;
 mod lower;
