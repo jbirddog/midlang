@@ -1,14 +1,14 @@
 use std::fmt;
 use std::fmt::Write;
 
-use midlang::compiler::FileNameAndContents;
+use midlang::compiler::BuildArtifacts;
 
 use crate::lower_lang::*;
 
 const IL_BUFFER_CAPACITY: usize = 1024;
 const INDENT: &str = "    ";
 
-pub fn generate_il(lower_lang: &LowerLang) -> Result<Vec<FileNameAndContents>, fmt::Error> {
+pub fn generate_il(lower_lang: &LowerLang) -> Result<BuildArtifacts, fmt::Error> {
     match lower_lang {
         LowerLang::CompUnit(name, decls) => Ok(vec![(filename(name), decls_il(decls)?)]),
     }
