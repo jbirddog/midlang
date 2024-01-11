@@ -4,6 +4,8 @@ ME := $(MY_USER):$(MY_GROUP)
 
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
+BUILD_DIR ?= build
+NINJA ?= samu
 MLC ?= ./target/debug/mlc
 DOCKER_IMG := midlang
 DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .:/app $(DOCKER_IMG)
@@ -37,11 +39,18 @@ clippy-check:
 check: fmt-check clippy-check
 	@/bin/true
 
-start:
-	$(IN_DEV) $(MLC) --json-file $(TEST_CASES_DIR)/json/hello_world.json
+clean:
+	@rm -rf $(BUILD_DIR)
+
+start: hello-world
+	@/bin/true
 
 hello-world:
-	$(IN_DEV) $(MLC) --json-file $(TEST_CASES_DIR)/json/hello_world.json
+	$(IN_DEV) $(MLC) \
+		--json-file $(TEST_CASES_DIR)/json/hello_world.json \
+		--build-dir $(BUILD_DIR)/hello_world \
+		--ninja samu \
+	&& $(IN_DEV) $(BUILD_DIR)/hello_world/a.out
 
 usage:
 	$(IN_DEV) $(MLC) --help
@@ -57,7 +66,7 @@ check-ownership:
 
 .PHONY: all \
 	dev-env sh \
-	compile test start \
+	compile test start clean \
 	fmt fmt-check clippy clippy-check check \
 	check-ownership take-ownership \
 	hello-world usage
