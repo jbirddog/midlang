@@ -8,9 +8,7 @@
             "name": "say_hello_world",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": []
-            }
+            "args": []
           }
         },
         {
@@ -18,9 +16,7 @@
             "name": "main",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": []
-            },
+            "args": [],
             "stmts": [
               {
                 "vardecl": {
@@ -57,16 +53,12 @@
             "name": "puts",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": [
-                {
-                  "named": {
-                    "name": "s",
-                    "type": "str"
-                  }
-                }
-              ]
-            }
+            "args": [
+              {
+                "name": "s",
+                "type": "str"
+              }
+            ]
           }
         },
         {
@@ -74,9 +66,7 @@
             "name": "say_hello_world",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": []
-            },
+            "args": [],
             "stmts": [
               {
                 "vardecl": {

@@ -21,28 +21,24 @@ pub enum Decl {
         name: String,
         visibility: Visibility,
         r#type: Type,
-        args: FuncArgs,
+        args: Vec<FuncArg>,
+        variadic: Option<bool>,
     },
     FuncDecl {
         name: String,
         visibility: Visibility,
         r#type: Type,
-        args: FuncArgs,
+        args: Vec<FuncArg>,
+        variadic: Option<bool>,
         stmts: Vec<Stmt>,
     },
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum FuncArgs {
-    Fixed(Vec<FuncArg>),
-    Variadic(FuncArg, Vec<FuncArg>),
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum FuncArg {
-    Named { name: String, r#type: Type },
+pub struct FuncArg {
+    pub name: String,
+    pub r#type: Type,
 }
 
 #[derive(Deserialize)]

@@ -4,7 +4,7 @@ use std::iter::zip;
 
 use crate::middle_lang::*;
 
-type FuncSig<'a> = (&'a Visibility, &'a Type, &'a FuncArgs);
+type FuncSig<'a> = (&'a Visibility, &'a Type, &'a Vec<FuncArg>, &'a Variadic);
 type FwdDecls<'a> = HashMap<&'a str, FuncSig<'a>>;
 type Res<T> = Result<T, Box<dyn Error>>;
 type Vars<'a> = HashMap<&'a str, &'a Type>;
@@ -18,22 +18,41 @@ pub fn type_check(modules: &[Module]) -> Res<()> {
 }
 
 fn check_decls(decls: &[Decl]) -> Res<()> {
+    fn variadic_err(name: &str) -> Res<()> {
+        Err(format!(
+            "Func '{}' requires at least one argument since it is variadic",
+            name
+        )
+        .into())
+    }
+
     let mut fwd_decls = FwdDecls::with_capacity(decls.len());
 
     for decl in decls {
         match decl {
-            Decl::FwdDecl(name, visibility, r#type, args) => {
-                fwd_decls.insert(name, (visibility, r#type, args));
+            Decl::FwdDecl(name, visibility, r#type, args, variadic) => {
+                if *variadic && args.is_empty() {
+                    return variadic_err(name);
+                }
+
+                fwd_decls.insert(name, (visibility, r#type, args, variadic));
             }
-            Decl::FuncDecl(name, visibility, r#type, args, stmts) => {
-                let sig = (visibility, r#type, args);
+            Decl::FuncDecl(name, visibility, r#type, args, variadic, stmts) => {
+                if *variadic && args.is_empty() {
+                    return variadic_err(name);
+                }
+
+                let sig = (visibility, r#type, args, variadic);
                 let fwd_sig = fwd_decls.entry(name).or_insert(sig);
 
                 if sig != *fwd_sig {
                     return Err(format!("FwdDecl mismatch for func '{}'", name).into());
                 }
 
-                let mut vars = vars_from_args(args)?;
+                let mut vars = args
+                    .iter()
+                    .map(|a| (a.0.as_ref(), &a.1))
+                    .collect::<HashMap<_, _>>();
 
                 if args.len() != vars.len() {
                     return Err(format!("Args for func '{}' must have unique names", name).into());
@@ -45,24 +64,6 @@ fn check_decls(decls: &[Decl]) -> Res<()> {
     }
 
     Ok(())
-}
-
-fn vars_from_args(args: &FuncArgs) -> Res<Vars> {
-    let (arg, args) = match args {
-        FuncArgs::Fixed(args) => (None, args),
-        FuncArgs::Variadic(first, rest) => (Some(first), rest),
-    };
-
-    let mut vars = args
-        .iter()
-        .map(|a| (a.name(), a.r#type()))
-        .collect::<HashMap<_, _>>();
-
-    if let Some(arg) = arg {
-        vars.insert(arg.name(), arg.r#type());
-    }
-
-    Ok(vars)
 }
 
 fn check_stmts<'a>(
@@ -108,36 +109,23 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
         Expr::ConstInt32(_) | Expr::ConstStr(_) => (),
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
-                Some((_, fwd_type, _)) if call_type != *fwd_type => {
+                Some((_, fwd_type, _, _)) if call_type != *fwd_type => {
                     return Err(format!(
                         "FuncCall '{}' type does not match forward declaration",
                         name
                     )
                     .into());
                 }
-                Some((_, _, FuncArgs::Fixed(fwd_args))) if exprs.len() != fwd_args.len() => {
+                Some((_, _, fwd_args, false)) if exprs.len() != fwd_args.len() => {
                     return param_count_err(name);
                 }
-                Some((_, _, FuncArgs::Fixed(fwd_args))) => {
-                    for (i, (arg, expr)) in zip(fwd_args, exprs).enumerate() {
-                        if arg.r#type() != expr.r#type() {
+                Some((_, _, fwd_args, true)) if exprs.len() < fwd_args.len() => {
+                    return param_count_err(name);
+                }
+                Some((_, _, fwd_args, _)) => {
+                    for (i, ((_, r#type), expr)) in zip(*fwd_args, exprs).enumerate() {
+                        if r#type != expr.r#type() {
                             return param_type_err(name, i);
-                        }
-                    }
-                }
-                Some((_, _, FuncArgs::Variadic(_, rest))) if exprs.len() < rest.len() + 1 => {
-                    return param_count_err(name);
-                }
-                Some((_, _, FuncArgs::Variadic(first, rest))) => {
-                    if exprs[0].r#type() != first.r#type() {
-                        return param_type_err(name, 0);
-                    }
-
-                    for (i, (arg, expr)) in
-                        zip(rest, exprs.iter().skip(1).take(rest.len())).enumerate()
-                    {
-                        if arg.r#type() != expr.r#type() {
-                            return param_type_err(name, i + 1);
                         }
                     }
                 }
@@ -174,13 +162,15 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -211,13 +201,15 @@ mod tests {
                     "main".to_string(),
                     Visibility::Public,
                     Type::Str,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![Stmt::Ret(Expr::ConstInt32(0))],
                 ),
             ],
@@ -235,10 +227,8 @@ mod tests {
                 "main".to_string(),
                 Visibility::Public,
                 Type::Int32,
-                FuncArgs::Fixed(vec![
-                    FuncArg::Named("s".to_string(), Type::Str),
-                    FuncArg::Named("s".to_string(), Type::Str),
-                ]),
+                vec![("s".to_string(), Type::Str), ("s".to_string(), Type::Str)],
+                false,
                 vec![Stmt::Ret(Expr::ConstInt32(0))],
             )],
         }];
@@ -255,7 +245,8 @@ mod tests {
                 "main".to_string(),
                 Visibility::Public,
                 Type::Int32,
-                FuncArgs::Fixed(vec![]),
+                vec![],
+                false,
                 vec![
                     Stmt::VarDecl(
                         "r".to_string(),
@@ -282,7 +273,8 @@ mod tests {
                 "main".to_string(),
                 Visibility::Public,
                 Type::Int32,
-                FuncArgs::Fixed(vec![]),
+                vec![],
+                false,
                 vec![Stmt::Ret(Expr::ConstStr("hello world".to_string()))],
             )],
         }];
@@ -300,13 +292,15 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -331,13 +325,15 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -371,13 +367,15 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -405,19 +403,22 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FwdDecl(
                     "ok".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("n".to_string(), Type::Int32)]),
+                    vec![("n".to_string(), Type::Int32)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![Stmt::Ret(Expr::FuncCall(
                         "ok".to_string(),
                         Type::Int32,
@@ -448,19 +449,22 @@ mod tests {
                     "puts".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FwdDecl(
                     "not_ok".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![FuncArg::Named("s".to_string(), Type::Str)]),
+                    vec![("s".to_string(), Type::Str)],
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![Stmt::Ret(Expr::FuncCall(
                         "not_ok".to_string(),
                         Type::Int32,
@@ -478,7 +482,7 @@ mod tests {
     }
 
     #[test]
-    fn func_call_variadic_params_just_first() -> TestResult {
+    fn func_call_variadic_params_just_one() -> TestResult {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -486,13 +490,15 @@ mod tests {
                     "printf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(FuncArg::Named("fmt".to_string(), Type::Str), vec![]),
+                    vec![("fmt".to_string(), Type::Str)],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -525,7 +531,7 @@ mod tests {
     }
 
     #[test]
-    fn func_call_variadic_params_with_rest() -> TestResult {
+    fn func_call_variadic_params_multiple() -> TestResult {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -533,16 +539,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(
-                        FuncArg::Named("fmt".to_string(), Type::Str),
-                        vec![FuncArg::Named("n".to_string(), Type::Int32)],
-                    ),
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -583,7 +591,7 @@ mod tests {
     #[should_panic(
         expected = "FuncCall 'printf' parameter count does not match forward declaration"
     )]
-    fn func_call_variadic_params_just_first_too_few() {
+    fn func_call_variadic_params_just_one_too_few() {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -591,13 +599,81 @@ mod tests {
                     "printf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(FuncArg::Named("fmt".to_string(), Type::Str), vec![]),
+                    vec![("fmt".to_string(), Type::Str)],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
+                    vec![
+                        Stmt::VarDecl(
+                            "r1".to_string(),
+                            Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
+                        ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Func 'printf' requires at least one argument since it is variadic")]
+    fn fwd_decl_variadic_no_params() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "printf".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    true,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    false,
+                    vec![
+                        Stmt::VarDecl(
+                            "r1".to_string(),
+                            Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
+                        ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Func 'main' requires at least one argument since it is variadic")]
+    fn func_decl_variadic_no_params() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "printf".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    false,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    true,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -616,7 +692,7 @@ mod tests {
     #[should_panic(
         expected = "FuncCall 'printf' parameter 0 type does not match forward declaration"
     )]
-    fn func_call_variadic_params_just_first_type_mismatch() {
+    fn func_call_variadic_params_just_one_type_mismatch() {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -624,13 +700,15 @@ mod tests {
                     "printf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(FuncArg::Named("fmt".to_string(), Type::Str), vec![]),
+                    vec![("fmt".to_string(), Type::Str)],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -653,7 +731,7 @@ mod tests {
     #[should_panic(
         expected = "FuncCall 'printnf' parameter count does not match forward declaration"
     )]
-    fn func_call_variadic_params_with_rest_too_few() {
+    fn func_call_variadic_params_with_many_too_few() {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -661,16 +739,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(
-                        FuncArg::Named("fmt".to_string(), Type::Str),
-                        vec![FuncArg::Named("n".to_string(), Type::Int32)],
-                    ),
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -693,7 +773,7 @@ mod tests {
     #[should_panic(
         expected = "FuncCall 'printnf' parameter 1 type does not match forward declaration"
     )]
-    fn func_call_variadic_params_with_rest_type_mismatch() {
+    fn func_call_variadic_params_with_many_type_mismatch() {
         let modules = [Module {
             name: "".to_string(),
             decls: vec![
@@ -701,16 +781,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Variadic(
-                        FuncArg::Named("fmt".to_string(), Type::Str),
-                        vec![FuncArg::Named("n".to_string(), Type::Int32)],
-                    ),
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    FuncArgs::Fixed(vec![]),
+                    vec![],
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),

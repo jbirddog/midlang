@@ -38,23 +38,27 @@ fn lower_decl(decl: &Decl) -> Res<m::Decl> {
             visibility,
             r#type,
             args,
+            variadic,
         } => Ok(m::Decl::FwdDecl(
             name.to_string(),
             lower_visibility(visibility),
             lower_type(r#type),
             lower_args(args),
+            variadic.unwrap_or(false),
         )),
         Decl::FuncDecl {
             name,
             visibility,
             r#type,
             args,
+            variadic,
             stmts,
         } => Ok(m::Decl::FuncDecl(
             name.to_string(),
             lower_visibility(visibility),
             lower_type(r#type),
             lower_args(args),
+            variadic.unwrap_or(false),
             lower_stmts(stmts)?,
         )),
     }
@@ -74,21 +78,10 @@ fn lower_type(r#type: &Type) -> m::Type {
     }
 }
 
-fn lower_args(args: &FuncArgs) -> m::FuncArgs {
-    fn lower(args: &[FuncArg]) -> Vec<m::FuncArg> {
-        args.iter().map(lower_arg).collect()
-    }
-
-    match args {
-        FuncArgs::Fixed(args) => m::FuncArgs::Fixed(lower(args)),
-        FuncArgs::Variadic(first, rest) => m::FuncArgs::Variadic(lower_arg(first), lower(rest)),
-    }
-}
-
-fn lower_arg(arg: &FuncArg) -> m::FuncArg {
-    match arg {
-        FuncArg::Named { name, r#type } => m::FuncArg::Named(name.to_string(), lower_type(r#type)),
-    }
+fn lower_args(args: &[FuncArg]) -> Vec<m::FuncArg> {
+    args.iter()
+        .map(|a| (a.name.to_string(), lower_type(&a.r#type)))
+        .collect()
 }
 
 fn lower_stmts(stmts: &[Stmt]) -> Res<Vec<m::Stmt>> {
