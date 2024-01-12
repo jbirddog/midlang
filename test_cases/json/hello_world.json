@@ -8,16 +8,12 @@
             "name": "puts",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": [
+            "args": [
                 {
-                  "named": {
                     "name": "s",
                     "type": "str"
                   }
-                }
               ]
-            }
           }
         },
         {
@@ -25,9 +21,8 @@
             "name": "main",
             "visibility": "public",
             "type": "int32",
-            "args": {
-              "fixed": []
-            },
+              "args": [],
+	      "variadic": false,
             "stmts": [
               {
                 "vardecl": {
