@@ -7,19 +7,19 @@ pub struct CompUnit {
 }
 
 pub type DataField = (Type, String);
+pub type FuncArg = (String, Type);
+pub type Variadic = bool;
 
 pub enum Decl {
     Data(String, Vec<DataField>),
-    FuncDecl(String, Option<Linkage>, Type, FuncArgs, Vec<Stmt>),
-}
-
-pub enum FuncArgs {
-    Fixed(Vec<FuncArg>),
-    Variadic(FuncArg, Vec<FuncArg>),
-}
-
-pub enum FuncArg {
-    Named(String, Type),
+    FuncDecl(
+        String,
+        Option<Linkage>,
+        Type,
+        Vec<FuncArg>,
+        Variadic,
+        Vec<Stmt>,
+    ),
 }
 
 pub enum Stmt {

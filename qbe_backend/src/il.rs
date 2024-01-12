@@ -47,14 +47,14 @@ fn append_decl_il(decl: &Decl, il: &mut impl Write) -> fmt::Result {
 
             il.write_str(" }\n")?;
         }
-        Decl::FuncDecl(name, linkage, r#type, args, stmts) => {
+        Decl::FuncDecl(name, linkage, r#type, args, variadic, stmts) => {
             if let Some(linkage) = linkage {
                 write!(il, "{} ", linkage)?;
             }
 
             write!(il, "function {} ${}(", r#type, name)?;
 
-            append_func_args_il(args, il)?;
+            append_func_args_il(args, *variadic, il)?;
 
             il.write_str(") {\n")?;
 
@@ -67,34 +67,17 @@ fn append_decl_il(decl: &Decl, il: &mut impl Write) -> fmt::Result {
     Ok(())
 }
 
-fn append_func_args_il(args: &FuncArgs, il: &mut impl Write) -> fmt::Result {
-    match args {
-        FuncArgs::Fixed(args) => {
-            for (i, arg) in args.iter().enumerate() {
-                if i > 0 {
-                    il.write_str(", ")?;
-                }
-                append_func_arg_il(arg, il)?;
-            }
+fn append_func_args_il(args: &[FuncArg], variadic: bool, il: &mut impl Write) -> fmt::Result {
+    for (i, (name, r#type)) in args.iter().enumerate() {
+        if i > 0 {
+            il.write_str(", ")?;
         }
-        FuncArgs::Variadic(first, rest) => {
-            append_func_arg_il(first, il)?;
 
-            for arg in rest {
-                il.write_str(", ")?;
-                append_func_arg_il(arg, il)?;
-            }
-
-            il.write_str(", ...")?;
-        }
+        write!(il, "{} %{}", r#type, name)?;
     }
 
-    Ok(())
-}
-
-fn append_func_arg_il(arg: &FuncArg, il: &mut impl Write) -> fmt::Result {
-    match arg {
-        FuncArg::Named(name, r#type) => write!(il, "{} %{}", r#type, name)?,
+    if variadic {
+        il.write_str(", ...")?;
     }
 
     Ok(())
