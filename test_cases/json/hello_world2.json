@@ -16,8 +16,7 @@
             "name": "main",
             "visibility": "public",
             "type": "int32",
-            "args": []
-            ,
+            "args": [],
             "stmts": [
               {
                 "vardecl": {
@@ -55,13 +54,11 @@
             "visibility": "public",
             "type": "int32",
             "args": [
-                {
-                    "name": "s",
-                    "type": "str"
-                  
-                }
-              ]
-            
+              {
+                "name": "s",
+                "type": "str"
+              }
+            ]
           }
         },
         {
@@ -69,8 +66,7 @@
             "name": "say_hello_world",
             "visibility": "public",
             "type": "int32",
-            "args": []
-            ,
+            "args": [],
             "stmts": [
               {
                 "vardecl": {

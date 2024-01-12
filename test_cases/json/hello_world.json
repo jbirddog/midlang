@@ -9,11 +9,11 @@
             "visibility": "public",
             "type": "int32",
             "args": [
-                {
-                    "name": "s",
-                    "type": "str"
-                  }
-              ]
+              {
+                "name": "s",
+                "type": "str"
+              }
+            ]
           }
         },
         {
@@ -21,8 +21,8 @@
             "name": "main",
             "visibility": "public",
             "type": "int32",
-              "args": [],
-	      "variadic": false,
+            "args": [],
+            "variadic": false,
             "stmts": [
               {
                 "vardecl": {
