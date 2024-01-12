@@ -81,13 +81,15 @@ mod tests {
                     "puts".to_string(),
                     m::Visibility::Public,
                     m::Type::Int32,
-                    m::FuncArgs::Fixed(vec![m::FuncArg::Named("s".to_string(), m::Type::Str)]),
+                    vec![("s".to_string(), m::Type::Str)],
+		    false,
                 ),
                 m::Decl::FuncDecl(
                     "main".to_string(),
                     m::Visibility::Public,
                     m::Type::Int32,
-                    m::FuncArgs::Fixed(vec![]),
+                    vec![],
+		    false,
                     vec![
                         m::Stmt::VarDecl(
                             "r".to_string(),
@@ -134,13 +136,15 @@ mod tests {
                         "say_hello_world".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
-                        m::FuncArgs::Fixed(vec![]),
+                        vec![],
+			false,
                     ),
                     m::Decl::FuncDecl(
                         "main".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
-                        m::FuncArgs::Fixed(vec![]),
+                        vec![],
+			false,
                         vec![
                             m::Stmt::VarDecl(
                                 "r".to_string(),
@@ -162,13 +166,15 @@ mod tests {
                         "puts".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
-                        m::FuncArgs::Fixed(vec![m::FuncArg::Named("s".to_string(), m::Type::Str)]),
+                        vec![("s".to_string(), m::Type::Str)],
+			false,
                     ),
                     m::Decl::FuncDecl(
                         "say_hello_world".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
-                        m::FuncArgs::Fixed(vec![]),
+                        vec![],
+			false,
                         vec![
                             m::Stmt::VarDecl(
                                 "r".to_string(),
