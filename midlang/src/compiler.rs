@@ -7,6 +7,7 @@ use std::process::Command;
 use ninja_writer::Ninja;
 
 use crate::middle_lang::Module;
+use crate::type_check::type_check;
 
 pub type FrontendResult = Result<Vec<Module>, Box<dyn Error>>;
 
@@ -49,6 +50,8 @@ pub fn new<'a>(
 impl Compiler<'_> {
     pub fn compile(&self) -> Result<(), Box<dyn Error>> {
         let modules = self.frontend.parse()?;
+        type_check(&modules)?;
+
         let mut ninja_writer = Ninja::new();
         let mut build_artifacts = self
             .backend
