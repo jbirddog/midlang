@@ -49,7 +49,7 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
         .collect()
 }
 
-fn lower_args(args: &Vec<m::FuncArg>) -> Vec<FuncArg> {
+fn lower_args(args: &[m::FuncArg]) -> Vec<FuncArg> {
     args.iter()
         .map(|a| (a.0.to_string(), lower_type(&a.1)))
         .collect()

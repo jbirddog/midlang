@@ -78,7 +78,7 @@ fn lower_type(r#type: &Type) -> m::Type {
     }
 }
 
-fn lower_args(args: &Vec<FuncArg>) -> Vec<m::FuncArg> {
+fn lower_args(args: &[FuncArg]) -> Vec<m::FuncArg> {
     args.iter()
         .map(|a| (a.name.to_string(), lower_type(&a.r#type)))
         .collect()

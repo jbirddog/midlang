@@ -157,14 +157,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -196,14 +196,14 @@ mod tests {
                     Visibility::Public,
                     Type::Str,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![Stmt::Ret(Expr::ConstInt32(0))],
                 ),
             ],
@@ -221,11 +221,8 @@ mod tests {
                 "main".to_string(),
                 Visibility::Public,
                 Type::Int32,
-                vec![
-                    ("s".to_string(), Type::Str),
-                    ("s".to_string(), Type::Str),
-                ],
-		false,
+                vec![("s".to_string(), Type::Str), ("s".to_string(), Type::Str)],
+                false,
                 vec![Stmt::Ret(Expr::ConstInt32(0))],
             )],
         }];
@@ -243,7 +240,7 @@ mod tests {
                 Visibility::Public,
                 Type::Int32,
                 vec![],
-		false,
+                false,
                 vec![
                     Stmt::VarDecl(
                         "r".to_string(),
@@ -270,8 +267,8 @@ mod tests {
                 "main".to_string(),
                 Visibility::Public,
                 Type::Int32,
-               vec![],
-	       false,
+                vec![],
+                false,
                 vec![Stmt::Ret(Expr::ConstStr("hello world".to_string()))],
             )],
         }];
@@ -290,14 +287,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -323,14 +320,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -365,14 +362,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r".to_string(),
@@ -401,21 +398,21 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FwdDecl(
                     "ok".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![("n".to_string(), Type::Int32)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![Stmt::Ret(Expr::FuncCall(
                         "ok".to_string(),
                         Type::Int32,
@@ -447,21 +444,21 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FwdDecl(
                     "not_ok".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![("s".to_string(), Type::Str)],
-		    false,
+                    false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![Stmt::Ret(Expr::FuncCall(
                         "not_ok".to_string(),
                         Type::Int32,
@@ -488,14 +485,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("fmt".to_string(), Type::Str)],
-		    true,
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -536,17 +533,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    vec![("fmt".to_string(), Type::Str),
-                        ("n".to_string(), Type::Int32)],
-    
-		    true,
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -596,14 +594,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("fmt".to_string(), Type::Str)],
-		    true,
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -631,14 +629,14 @@ mod tests {
                     Visibility::Public,
                     Type::Int32,
                     vec![("fmt".to_string(), Type::Str)],
-		    true,
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -669,16 +667,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    vec![("fmt".to_string(), Type::Str),
-                        ("n".to_string(), Type::Int32)],
-		    true,
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
@@ -709,16 +709,18 @@ mod tests {
                     "printnf".to_string(),
                     Visibility::Public,
                     Type::Int32,
-                    vec![("fmt".to_string(), Type::Str),
-                        ("n".to_string(), Type::Int32)],
-		    true,
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
                     Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),

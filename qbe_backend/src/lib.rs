@@ -82,14 +82,14 @@ mod tests {
                     m::Visibility::Public,
                     m::Type::Int32,
                     vec![("s".to_string(), m::Type::Str)],
-		    false,
+                    false,
                 ),
                 m::Decl::FuncDecl(
                     "main".to_string(),
                     m::Visibility::Public,
                     m::Type::Int32,
                     vec![],
-		    false,
+                    false,
                     vec![
                         m::Stmt::VarDecl(
                             "r".to_string(),
@@ -137,14 +137,14 @@ mod tests {
                         m::Visibility::Public,
                         m::Type::Int32,
                         vec![],
-			false,
+                        false,
                     ),
                     m::Decl::FuncDecl(
                         "main".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
                         vec![],
-			false,
+                        false,
                         vec![
                             m::Stmt::VarDecl(
                                 "r".to_string(),
@@ -167,14 +167,14 @@ mod tests {
                         m::Visibility::Public,
                         m::Type::Int32,
                         vec![("s".to_string(), m::Type::Str)],
-			false,
+                        false,
                     ),
                     m::Decl::FuncDecl(
                         "say_hello_world".to_string(),
                         m::Visibility::Public,
                         m::Type::Int32,
                         vec![],
-			false,
+                        false,
                         vec![
                             m::Stmt::VarDecl(
                                 "r".to_string(),
