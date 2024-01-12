@@ -49,8 +49,10 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
         .collect()
 }
 
-fn lower_args(args: &Vec<m::FuncArg>) -> (Vec<FuncArg>, bool) {
-    args.iter().map(|a| (a.0, lower_type(a.1))).collect()
+fn lower_args(args: &Vec<m::FuncArg>) -> Vec<FuncArg> {
+    args.iter()
+        .map(|a| (a.0.to_string(), lower_type(&a.1)))
+        .collect()
 }
 
 fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) {
