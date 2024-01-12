@@ -18,14 +18,30 @@ pub fn type_check(modules: &[Module]) -> Res<()> {
 }
 
 fn check_decls(decls: &[Decl]) -> Res<()> {
+    fn variadic_err(name: &str) -> Res<()> {
+        Err(format!(
+            "Func '{}' requires at least one argument since it is variadic",
+            name
+        )
+        .into())
+    }
+
     let mut fwd_decls = FwdDecls::with_capacity(decls.len());
 
     for decl in decls {
         match decl {
             Decl::FwdDecl(name, visibility, r#type, args, variadic) => {
+                if *variadic && args.is_empty() {
+                    return variadic_err(name);
+                }
+
                 fwd_decls.insert(name, (visibility, r#type, args, variadic));
             }
             Decl::FuncDecl(name, visibility, r#type, args, variadic, stmts) => {
+                if *variadic && args.is_empty() {
+                    return variadic_err(name);
+                }
+
                 let sig = (visibility, r#type, args, variadic);
                 let fwd_sig = fwd_decls.entry(name).or_insert(sig);
 
@@ -106,20 +122,10 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
                 Some((_, _, fwd_args, true)) if exprs.len() < fwd_args.len() => {
                     return param_count_err(name);
                 }
-                Some((_, _, fwd_args, false)) => {
+                Some((_, _, fwd_args, _)) => {
                     for (i, ((_, r#type), expr)) in zip(*fwd_args, exprs).enumerate() {
                         if r#type != expr.r#type() {
                             return param_type_err(name, i);
-                        }
-                    }
-                }
-                Some((_, _, fwd_args, true)) => {
-                    for (i, ((_, r#type), expr)) in
-                        zip(*fwd_args, exprs.iter().take(fwd_args.len())).enumerate()
-                    // TODO: remove the take? if so collapse this and the above case, _ variadic - check after tests pass
-                    {
-                        if r#type != expr.r#type() {
-                            return param_type_err(name, i + 1);
                         }
                     }
                 }
@@ -602,6 +608,76 @@ mod tests {
                     Type::Int32,
                     vec![],
                     false,
+                    vec![
+                        Stmt::VarDecl(
+                            "r1".to_string(),
+                            Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
+                        ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Func 'printf' requires at least one argument since it is variadic"
+    )]
+    fn fwd_decl_variadic_no_params() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "printf".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    true,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    false,
+                    vec![
+                        Stmt::VarDecl(
+                            "r1".to_string(),
+                            Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
+                        ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Func 'main' requires at least one argument since it is variadic"
+    )]
+    fn func_decl_variadic_no_params() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "printf".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    false,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    true,
                     vec![
                         Stmt::VarDecl(
                             "r1".to_string(),
