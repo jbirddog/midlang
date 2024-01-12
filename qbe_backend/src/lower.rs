@@ -34,12 +34,14 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
                 let mut stmts = Vec::<Stmt>::with_capacity(m_stmts.len() * 2);
                 stmts.push(Stmt::Lbl("start".to_string()));
                 lower_stmts(m_stmts, &mut stmts, ctx);
+                let (args, variadic) = lower_args(args);
 
                 Some(Decl::FuncDecl(
                     name.to_string(),
                     lower_visibility(visibility),
                     lower_type(r#type),
-                    lower_args(args),
+                    args,
+                    variadic,
                     stmts,
                 ))
             }
@@ -48,20 +50,25 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
         .collect()
 }
 
-fn lower_args(args: &m::FuncArgs) -> FuncArgs {
+fn lower_args(args: &m::FuncArgs) -> (Vec<FuncArg>, bool) {
     fn lower(args: &[m::FuncArg]) -> Vec<FuncArg> {
         args.iter().map(lower_arg).collect()
     }
 
     match args {
-        m::FuncArgs::Fixed(args) => FuncArgs::Fixed(lower(args)),
-        m::FuncArgs::Variadic(first, rest) => FuncArgs::Variadic(lower_arg(first), lower(rest)),
+        m::FuncArgs::Fixed(args) => (lower(args), false),
+        m::FuncArgs::Variadic(first, rest) => {
+            let mut v = vec![lower_arg(first)];
+            v.extend(lower(rest));
+
+            (v, true)
+        }
     }
 }
 
 fn lower_arg(arg: &m::FuncArg) -> FuncArg {
     match arg {
-        m::FuncArg::Named(name, r#type) => FuncArg::Named(name.to_string(), lower_type(r#type)),
+        m::FuncArg::Named(name, r#type) => (name.to_string(), lower_type(r#type)),
     }
 }
 
