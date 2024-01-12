@@ -623,9 +623,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "Func 'printf' requires at least one argument since it is variadic"
-    )]
+    #[should_panic(expected = "Func 'printf' requires at least one argument since it is variadic")]
     fn fwd_decl_variadic_no_params() {
         let modules = [Module {
             name: "".to_string(),
@@ -658,9 +656,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "Func 'main' requires at least one argument since it is variadic"
-    )]
+    #[should_panic(expected = "Func 'main' requires at least one argument since it is variadic")]
     fn func_decl_variadic_no_params() {
         let modules = [Module {
             name: "".to_string(),
