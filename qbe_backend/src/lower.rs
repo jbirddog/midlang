@@ -100,6 +100,9 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
 
             Value::VarRef(name, r#type, Scope::Func)
         }
+        m::Expr::VarRef(name, r#type) => {
+            Value::VarRef(name.to_string(), lower_type(r#type), Scope::Func)
+        }
     }
 }
 
@@ -108,7 +111,8 @@ fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> E
         m::Expr::ConstBool(_)
         | m::Expr::ConstInt32(_)
         | m::Expr::ConstInt64(_)
-        | m::Expr::ConstStr(_) => {
+        | m::Expr::ConstStr(_)
+        | m::Expr::VarRef(_, _) => {
             let value = lower_expr_to_value(expr, stmts, ctx);
             Expr::Value(value)
         }
