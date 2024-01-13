@@ -74,36 +74,7 @@ mod tests {
 
     #[test]
     fn hello_world() -> TestResult {
-        let modules = [m::Module {
-            name: "hello_world".to_string(),
-            decls: vec![
-                m::Decl::FwdDecl(
-                    "puts".to_string(),
-                    m::Visibility::Public,
-                    m::Type::Int32,
-                    vec![("s".to_string(), m::Type::Str)],
-                    false,
-                ),
-                m::Decl::FuncDecl(
-                    "main".to_string(),
-                    m::Visibility::Public,
-                    m::Type::Int32,
-                    vec![],
-                    false,
-                    vec![
-                        m::Stmt::VarDecl(
-                            "r".to_string(),
-                            m::Expr::FuncCall(
-                                "puts".to_string(),
-                                m::Type::Int32,
-                                vec![m::Expr::ConstStr("hello world".to_string())],
-                            ),
-                        ),
-                        m::Stmt::Ret(m::Expr::ConstInt32(0)),
-                    ],
-                ),
-            ],
-        }];
+        let modules = mtc::hello_world();
 
         let mut ninja_writer = Ninja::new();
         let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
@@ -128,68 +99,7 @@ mod tests {
 
     #[test]
     fn hello_world2() -> TestResult {
-        let modules = [
-            m::Module {
-                name: "hello_world2".to_string(),
-                decls: vec![
-                    m::Decl::FwdDecl(
-                        "say_hello_world".to_string(),
-                        m::Visibility::Public,
-                        m::Type::Int32,
-                        vec![],
-                        false,
-                    ),
-                    m::Decl::FuncDecl(
-                        "main".to_string(),
-                        m::Visibility::Public,
-                        m::Type::Int32,
-                        vec![],
-                        false,
-                        vec![
-                            m::Stmt::VarDecl(
-                                "r".to_string(),
-                                m::Expr::FuncCall(
-                                    "say_hello_world".to_string(),
-                                    m::Type::Int32,
-                                    vec![],
-                                ),
-                            ),
-                            m::Stmt::Ret(m::Expr::ConstInt32(0)),
-                        ],
-                    ),
-                ],
-            },
-            m::Module {
-                name: "hello_world2_sayer".to_string(),
-                decls: vec![
-                    m::Decl::FwdDecl(
-                        "puts".to_string(),
-                        m::Visibility::Public,
-                        m::Type::Int32,
-                        vec![("s".to_string(), m::Type::Str)],
-                        false,
-                    ),
-                    m::Decl::FuncDecl(
-                        "say_hello_world".to_string(),
-                        m::Visibility::Public,
-                        m::Type::Int32,
-                        vec![],
-                        false,
-                        vec![
-                            m::Stmt::VarDecl(
-                                "r".to_string(),
-                                m::Expr::FuncCall(
-                                    "puts".to_string(),
-                                    m::Type::Int32,
-                                    vec![m::Expr::ConstStr("hello world".to_string())],
-                                ),
-                            ),
-                            m::Stmt::Ret(m::Expr::ConstInt32(0)),
-                        ],
-                    ),
-                ],
-            },
-        ];
+        let modules = mtc::hello_world2();
 
         let mut ninja_writer = Ninja::new();
         let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;

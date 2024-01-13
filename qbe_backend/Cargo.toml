@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 compiler = { path = "../compiler" }
 midlang = { path = "../midlang" }
-
 ninja-writer = "0.2.0"
+
+[dev-dependencies]
+mtc = { path = "../mtc" }
+
