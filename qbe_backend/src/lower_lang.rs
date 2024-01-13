@@ -34,6 +34,7 @@ pub enum Expr {
 }
 
 pub enum Value {
+    ConstL(i64),
     ConstW(i32),
     VarRef(String, Type, Scope),
 }
@@ -70,6 +71,7 @@ impl Typed for Expr {
 impl Typed for Value {
     fn r#type(&self) -> Type {
         match self {
+            Value::ConstL(_) => Type::L,
             Value::ConstW(_) => Type::W,
             Value::VarRef(_, r#type, _) => *r#type,
         }

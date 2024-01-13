@@ -73,7 +73,10 @@ fn lower_visibility(visibility: &Visibility) -> m::Visibility {
 
 fn lower_type(r#type: &Type) -> m::Type {
     match r#type {
+        Type::Bool => m::Type::Bool,
         Type::Int32 => m::Type::Int32,
+        Type::Int64 => m::Type::Int64,
+        Type::Ptr => m::Type::Ptr,
         Type::Str => m::Type::Str,
     }
 }
@@ -102,8 +105,9 @@ fn lower_exprs(exprs: &[Expr]) -> Res<Vec<m::Expr>> {
 fn lower_expr(expr: &Expr) -> Res<m::Expr> {
     match expr {
         Expr::Const { value, r#type } => match (value, r#type) {
-            (Value::String(s), Type::Str) => Ok(m::Expr::ConstStr(s.to_string())),
+            (Value::Bool(b), Type::Bool) => Ok(m::Expr::ConstBool(*b)),
             (Value::Number(n), _) => Ok(lower_number(n, r#type)?),
+            (Value::String(s), Type::Str) => Ok(m::Expr::ConstStr(s.to_string())),
             _ => Err(Box::from("Unsupported value and type")),
         },
         Expr::FuncCall { name, r#type, args } => Ok(m::Expr::FuncCall(
@@ -122,8 +126,14 @@ fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> 
             .ok_or_else(|| Box::from("Number is not an Int32"))
     }
 
+    fn as_i64(num: &serde_json::value::Number) -> Res<i64> {
+        num.as_i64()
+            .ok_or_else(|| Box::from("Number is not an Int64"))
+    }
+
     match (num, r#type) {
         (n, Type::Int32) => Ok(m::Expr::ConstInt32(as_i32(n)?)),
+        (n, Type::Int64) => Ok(m::Expr::ConstInt64(as_i64(n)?)),
         _ => Err(Box::from("Invalid number value and type")),
     }
 }

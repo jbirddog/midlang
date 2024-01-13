@@ -83,7 +83,10 @@ fn lower_exprs_to_values(
 
 fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Value {
     match expr {
+        m::Expr::ConstBool(true) => Value::ConstW(1),
+        m::Expr::ConstBool(false) => Value::ConstW(0),
         m::Expr::ConstInt32(i) => Value::ConstW(*i),
+        m::Expr::ConstInt64(i) => Value::ConstL(*i),
         m::Expr::ConstStr(s) => {
             let name = ctx.name_for_str(s);
             Value::VarRef(name, Type::L, Scope::Global)
@@ -102,7 +105,10 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
 
 fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Expr {
     match expr {
-        m::Expr::ConstInt32(_) | m::Expr::ConstStr(_) => {
+        m::Expr::ConstBool(_)
+        | m::Expr::ConstInt32(_)
+        | m::Expr::ConstInt64(_)
+        | m::Expr::ConstStr(_) => {
             let value = lower_expr_to_value(expr, stmts, ctx);
             Expr::Value(value)
         }
@@ -130,7 +136,7 @@ fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {
 
 fn lower_type(r#type: &m::Type) -> Type {
     match r#type {
-        m::Type::Int32 => Type::W,
-        m::Type::Str => Type::L,
+        m::Type::Bool | m::Type::Int32 => Type::W,
+        m::Type::Int64 | m::Type::Ptr | m::Type::Str => Type::L,
     }
 }

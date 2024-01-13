@@ -106,7 +106,7 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
     }
 
     match expr {
-        Expr::ConstInt32(_) | Expr::ConstStr(_) => (),
+        Expr::ConstBool(_) | Expr::ConstInt32(_) | Expr::ConstInt64(_) | Expr::ConstStr(_) => (),
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
                 Some((_, fwd_type, _, _)) if call_type != *fwd_type => {

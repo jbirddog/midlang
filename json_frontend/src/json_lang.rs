@@ -72,6 +72,9 @@ pub enum Visibility {
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Type {
+    Bool,
     Int32,
+    Int64,
+    Ptr,
     Str,
 }
