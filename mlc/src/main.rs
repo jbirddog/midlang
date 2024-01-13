@@ -2,8 +2,6 @@ use std::error::Error;
 
 use clap::Parser;
 
-use midlang::compiler;
-
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(short, long)]

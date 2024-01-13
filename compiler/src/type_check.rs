@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::iter::zip;
 
-use crate::middle_lang::*;
+use midlang::*;
 
 type FuncSig<'a> = (&'a Visibility, &'a Type, &'a Vec<FuncArg>, &'a Variadic);
 type FwdDecls<'a> = HashMap<&'a str, FuncSig<'a>>;

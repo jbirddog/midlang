@@ -6,8 +6,10 @@ use std::process::Command;
 
 use ninja_writer::Ninja;
 
-use crate::middle_lang::Module;
+mod type_check;
+
 use crate::type_check::type_check;
+use midlang::Module;
 
 pub type FrontendResult = Result<Vec<Module>, Box<dyn Error>>;
 

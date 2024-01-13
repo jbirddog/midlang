@@ -2,8 +2,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-use midlang::compiler;
-
 mod json_lang;
 mod lower;
 
@@ -38,7 +36,7 @@ impl Frontend<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use midlang::compiler::Frontend;
+    use compiler::Frontend;
     use std::error::Error;
     use std::path::Path;
 

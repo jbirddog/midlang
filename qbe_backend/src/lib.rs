@@ -10,8 +10,8 @@ mod lowering_context;
 
 use il::generate_il;
 use lower::lower;
-use midlang::compiler;
-use midlang::middle_lang as m;
+
+use midlang as m;
 
 pub struct Backend {}
 
@@ -68,7 +68,7 @@ mod tests {
     use std::fs::read_to_string;
     use std::path::Path;
 
-    use midlang::compiler::Backend as _;
+    use compiler::Backend as _;
 
     type TestResult = Result<(), Box<dyn Error>>;
 

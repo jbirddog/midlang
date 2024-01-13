@@ -2,7 +2,7 @@ use std::error::Error;
 
 use serde_json::Value;
 
-use midlang::middle_lang as m;
+use midlang as m;
 
 use crate::json_lang::*;
 
