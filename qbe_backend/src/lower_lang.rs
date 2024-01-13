@@ -23,6 +23,8 @@ pub enum Decl {
 }
 
 pub enum Stmt {
+    Jmp(String),
+    Jnz(Value, String, String),
     Lbl(String),
     Ret(Value),
     VarDecl(String, Scope, Expr),

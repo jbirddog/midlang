@@ -93,9 +93,17 @@ fn lower_stmts(stmts: &[Stmt]) -> Res<Vec<m::Stmt>> {
 
 fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
     match stmt {
+        Stmt::Cond { cases } => Ok(m::Stmt::Cond(lower_cases(cases)?)),
         Stmt::Ret { value } => Ok(m::Stmt::Ret(lower_expr(value)?)),
         Stmt::VarDecl { name, value } => Ok(m::Stmt::VarDecl(name.to_string(), lower_expr(value)?)),
     }
+}
+
+fn lower_cases(cases: &[Case]) -> Res<Vec<m::Case>> {
+    cases
+        .iter()
+        .map(|c| Ok((lower_expr(&c.expr)?, lower_stmts(&c.stmts)?)))
+        .collect()
 }
 
 fn lower_exprs(exprs: &[Expr]) -> Res<Vec<m::Expr>> {

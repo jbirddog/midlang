@@ -136,4 +136,29 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn hello_world_cond() -> TestResult {
+        let modules = mtc::hello_world_cond();
+
+        let mut ninja_writer = Ninja::new();
+        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
+        assert_eq!(ba.len(), 1);
+        assert_eq!(ba[0].0, "hello_world_cond.il");
+
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("qbe")
+            .join("hello_world_cond.il");
+        let expected_il = read_to_string(&path)?;
+
+        assert_eq!(ba[0].1, expected_il);
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("hello_world_cond.il"));
+        assert!(ninja_build.contains("hello_world_cond.s"));
+        assert!(ninja_build.contains("hello_world_cond.o"));
+        assert!(ninja_build.contains("a.out"));
+
+        Ok(())
+    }
 }

@@ -74,6 +74,13 @@ fn check_stmts<'a>(
 ) -> Res<()> {
     for stmt in stmts {
         match stmt {
+            Stmt::Cond(cases) => {
+                for (expr, _) in cases {
+                    if *expr.r#type() != Type::Bool {
+                        return Err("Cond case expressions must be of type bool".into());
+                    }
+                }
+            }
             Stmt::Ret(expr) if expr.r#type() != func_type => {
                 return Err("Return statment type does not match function type".into());
             }
@@ -163,6 +170,15 @@ mod tests {
     #[test]
     fn hello_world() -> TestResult {
         let modules = mtc::hello_world();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn hello_world_cond() -> TestResult {
+        let modules = mtc::hello_world_cond();
 
         type_check(&modules)?;
 
@@ -709,6 +725,52 @@ mod tests {
                                 ],
                             ),
                         ),
+                        Stmt::Ret(Expr::ConstInt32(0)),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Cond case expressions must be of type bool")]
+    fn func_cond_case_not_bool() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "printnf".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![
+                        ("fmt".to_string(), Type::Str),
+                        ("n".to_string(), Type::Int32),
+                    ],
+                    true,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Type::Int32,
+                    vec![],
+                    false,
+                    vec![
+                        Stmt::Cond(vec![(
+                            Expr::ConstInt32(3),
+                            vec![Stmt::VarDecl(
+                                "r1".to_string(),
+                                Expr::FuncCall(
+                                    "printnf".to_string(),
+                                    Type::Int32,
+                                    vec![
+                                        Expr::ConstStr("hello world".to_string()),
+                                        Expr::ConstStr("hello world".to_string()),
+                                    ],
+                                ),
+                            )],
+                        )]),
                         Stmt::Ret(Expr::ConstInt32(0)),
                     ],
                 ),

@@ -3,6 +3,7 @@ pub struct Module {
     pub decls: Vec<Decl>,
 }
 
+pub type Case = (Expr, Vec<Stmt>);
 pub type FuncArg = (String, Type);
 pub type Variadic = bool;
 
@@ -12,6 +13,7 @@ pub enum Decl {
 }
 
 pub enum Stmt {
+    Cond(Vec<Case>),
     Ret(Expr),
     VarDecl(String, Expr),
 }

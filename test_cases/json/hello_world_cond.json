@@ -1,0 +1,120 @@
+{
+  "modules": [
+    {
+      "name": "hello_world_cond",
+      "decls": [
+        {
+          "fwddecl": {
+            "name": "puts",
+            "visibility": "public",
+            "type": "int32",
+            "args": [
+              {
+                "name": "s",
+                "type": "str"
+              }
+            ]
+          }
+        },
+        {
+          "fwddecl": {
+            "name": "exit",
+            "visibility": "public",
+            "type": "int32",
+            "args": [
+              {
+                "name": "status",
+                "type": "int32"
+              }
+            ]
+          }
+        },
+        {
+          "funcdecl": {
+            "name": "main",
+            "visibility": "public",
+            "type": "int32",
+            "args": [],
+            "variadic": false,
+            "stmts": [
+              {
+                "cond": {
+                  "cases": [
+                    {
+                      "expr": {
+                        "const": {
+                          "value": false,
+                          "type": "bool"
+                        }
+                      },
+                      "stmts": [
+                        {
+                          "vardecl": {
+                            "name": "r",
+                            "value": {
+                              "funccall": {
+                                "name": "exit",
+                                "type": "int32",
+                                "args": [
+                                  {
+                                    "const": {
+                                      "value": 1,
+                                      "type": "int32"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "expr": {
+                        "const": {
+                          "value": true,
+                          "type": "bool"
+                        }
+                      },
+                      "stmts": [
+                        {
+                          "vardecl": {
+                            "name": "r",
+                            "value": {
+                              "funccall": {
+                                "name": "puts",
+                                "type": "int32",
+                                "args": [
+                                  {
+                                    "const": {
+                                      "value": "hello world",
+                                      "type": "str"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "ret": {
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

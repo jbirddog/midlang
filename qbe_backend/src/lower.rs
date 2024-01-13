@@ -32,7 +32,7 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
         .filter_map(|d| match d {
             m::Decl::FuncDecl(name, visibility, r#type, args, variadic, m_stmts) => {
                 let mut stmts = Vec::<Stmt>::with_capacity(m_stmts.len() * 2);
-                stmts.push(Stmt::Lbl("start".to_string()));
+                stmts.push(lbl("start"));
                 lower_stmts(m_stmts, &mut stmts, ctx);
 
                 Some(Decl::FuncDecl(
@@ -58,6 +58,26 @@ fn lower_args(args: &[m::FuncArg]) -> Vec<FuncArg> {
 fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) {
     for stmt in m_stmts {
         match stmt {
+            m::Stmt::Cond(cases) => {
+                let lbl_prefix = "cond";
+                let end_lbl = format!("{}_end", lbl_prefix);
+
+                for (i, (expr, case_stmts)) in cases.iter().enumerate() {
+                    let value = lower_expr_to_value(expr, stmts, ctx);
+                    let true_lbl = format!("{}_case_{}", lbl_prefix, i);
+                    let false_lbl = format!("{}_end", true_lbl);
+
+                    stmts.push(Stmt::Jnz(value, true_lbl.clone(), false_lbl.clone()));
+                    stmts.push(lbl(&true_lbl));
+
+                    lower_stmts(case_stmts, stmts, ctx);
+
+                    stmts.push(Stmt::Jmp(end_lbl.clone()));
+                    stmts.push(lbl(&false_lbl));
+                }
+
+                stmts.push(Stmt::Lbl(end_lbl));
+            }
             m::Stmt::Ret(expr) => {
                 let value = lower_expr_to_value(expr, stmts, ctx);
                 stmts.push(Stmt::Ret(value));
@@ -143,4 +163,8 @@ fn lower_type(r#type: &m::Type) -> Type {
         m::Type::Bool | m::Type::Int32 => Type::W,
         m::Type::Int64 | m::Type::Ptr | m::Type::Str => Type::L,
     }
+}
+
+fn lbl(name: &str) -> Stmt {
+    Stmt::Lbl(name.to_string())
 }

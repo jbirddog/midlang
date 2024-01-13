@@ -86,6 +86,12 @@ fn append_func_args_il(args: &[FuncArg], variadic: bool, il: &mut impl Write) ->
 fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
     for stmt in stmts {
         match stmt {
+            Stmt::Jmp(lbl) => write!(il, "{}jmp @{}", INDENT, lbl)?,
+            Stmt::Jnz(value, true_lbl, false_lbl) => {
+                write!(il, "{}jnz ", INDENT)?;
+                append_value_il(value, false, il)?;
+                write!(il, ", @{}, @{}", true_lbl, false_lbl)?;
+            }
             Stmt::Lbl(name) => write!(il, "@{}", name)?,
             Stmt::Ret(value) => {
                 write!(il, "{}ret ", INDENT)?;
