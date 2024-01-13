@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::Write;
 
-use midlang::compiler::BuildArtifacts;
+use compiler::BuildArtifacts;
 
 use crate::lower_lang::*;
 

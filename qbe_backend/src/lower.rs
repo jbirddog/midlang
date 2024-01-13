@@ -1,4 +1,4 @@
-use midlang::middle_lang as m;
+use midlang as m;
 
 use crate::lower_lang::*;
 use crate::lowering_context::LoweringCtx;
