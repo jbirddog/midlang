@@ -60,6 +60,10 @@ pub enum Expr {
         r#type: Type,
         args: Vec<Expr>,
     },
+    VarRef {
+        name: String,
+        r#type: Type,
+    },
 }
 
 #[derive(Deserialize)]

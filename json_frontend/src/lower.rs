@@ -115,6 +115,7 @@ fn lower_expr(expr: &Expr) -> Res<m::Expr> {
             lower_type(r#type),
             lower_exprs(args)?,
         )),
+        Expr::VarRef { name, r#type } => Ok(m::Expr::VarRef(name.to_string(), lower_type(r#type))),
     }
 }
 

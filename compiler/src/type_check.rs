@@ -88,7 +88,7 @@ fn check_stmts<'a>(
     Ok(())
 }
 
-fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
+fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
     fn param_count_err(name: &str) -> Res<()> {
         Err(format!(
             "FuncCall '{}' parameter count does not match forward declaration",
@@ -107,6 +107,13 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
 
     match expr {
         Expr::ConstBool(_) | Expr::ConstInt32(_) | Expr::ConstInt64(_) | Expr::ConstStr(_) => (),
+        Expr::VarRef(name, r#type) => match vars.get(&name as &str) {
+            Some(expr_type) if *expr_type != r#type => {
+                return Err(format!("VarRef '{}' type does not match its declaration", name).into())
+            }
+            Some(_) => (),
+            None => return Err(format!("VarRef '{}' does not have a declaration", name).into()),
+        },
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
                 Some((_, fwd_type, _, _)) if call_type != *fwd_type => {
@@ -139,7 +146,7 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, _vars: &mut Vars) -> Res<()> {
             }
 
             for expr in exprs {
-                check_expr(expr, fwd_decls, _vars)?;
+                check_expr(expr, fwd_decls, vars)?;
             }
         }
     }
@@ -183,6 +190,15 @@ mod tests {
     #[test]
     fn func_call_variadic_params_multiple() -> TestResult {
         let modules = mtc::func_call_variadic_params_multiple();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn var_ref() -> TestResult {
+        let modules = mtc::var_ref();
 
         type_check(&modules)?;
 
@@ -274,6 +290,45 @@ mod tests {
                 vec![],
                 false,
                 vec![Stmt::Ret(Expr::ConstStr("hello world".to_string()))],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "VarRef 'missing' does not have a declaration")]
+    fn var_ref_no_decl() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Type::Int32,
+                vec![],
+                false,
+                vec![Stmt::Ret(Expr::VarRef("missing".to_string(), Type::Int32))],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "VarRef 'x' type does not match its declaration")]
+    fn var_ref_decl_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Type::Int32,
+                vec![],
+                false,
+                vec![
+                    Stmt::VarDecl("x".to_string(), Expr::ConstBool(true)),
+                    Stmt::Ret(Expr::VarRef("x".to_string(), Type::Int32)),
+                ],
             )],
         }];
 

@@ -133,3 +133,20 @@ pub fn func_call_variadic_params_just_one() -> Vec<Module> {
         ],
     }]
 }
+
+pub fn var_ref() -> Vec<Module> {
+    vec![Module {
+        name: "".to_string(),
+        decls: vec![Decl::FuncDecl(
+            "main".to_string(),
+            Visibility::Public,
+            Type::Int32,
+            vec![],
+            false,
+            vec![
+                Stmt::VarDecl("x".to_string(), Expr::ConstInt32(0)),
+                Stmt::Ret(Expr::VarRef("x".to_string(), Type::Int32)),
+            ],
+        )],
+    }]
+}
