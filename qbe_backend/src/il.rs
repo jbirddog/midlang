@@ -126,9 +126,15 @@ fn append_expr_il(expr: &Expr, type_consts: bool, il: &mut impl Write) -> fmt::R
 
 fn append_value_il(value: &Value, type_consts: bool, il: &mut impl Write) -> fmt::Result {
     match value {
+        Value::ConstL(v) => {
+            if type_consts {
+                write!(il, "{} ", value.r#type())?;
+            }
+            write!(il, "{}", v)?;
+        }
         Value::ConstW(v) => {
             if type_consts {
-                write!(il, "{} ", Type::W)?;
+                write!(il, "{} ", value.r#type())?;
             }
             write!(il, "{}", v)?;
         }
