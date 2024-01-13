@@ -9,3 +9,7 @@ edition = "2021"
 ninja-writer = "0.2.0"
 
 midlang = { path = "../midlang" }
+
+[dev-dependencies]
+mtc = { path = "../mtc" }
+
