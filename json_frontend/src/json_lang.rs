@@ -44,8 +44,16 @@ pub struct FuncArg {
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Stmt {
+    Cond { cases: Vec<Case> },
     Ret { value: Expr },
     VarDecl { name: String, value: Expr },
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub struct Case {
+    pub expr: Expr,
+    pub stmts: Vec<Stmt>,
 }
 
 #[derive(Deserialize)]

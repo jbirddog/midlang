@@ -62,6 +62,13 @@ hello-world2:
 		--ninja samu \
 	&& $(IN_DEV) $(BUILD_DIR)/hello_world2/a.out
 
+hello-world-cond:
+	$(IN_DEV) $(MLC) \
+		--json-file $(TEST_CASES_DIR)/json/hello_world_cond.json \
+		--build-dir $(BUILD_DIR)/hello_world_cond \
+		--ninja samu \
+	&& $(IN_DEV) $(BUILD_DIR)/hello_world_cond/a.out
+
 usage:
 	$(IN_DEV) $(MLC) --help
 

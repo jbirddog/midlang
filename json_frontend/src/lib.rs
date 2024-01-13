@@ -65,4 +65,16 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn hello_world_cond() -> TestResult {
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("json")
+            .join("hello_world_cond.json");
+        let filename = &path.display().to_string();
+
+        new(&filename).parse()?;
+
+        Ok(())
+    }
 }
