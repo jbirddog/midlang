@@ -20,7 +20,6 @@
           "fwddecl": {
             "name": "exit",
             "visibility": "public",
-            "type": "int32",
             "args": [
               {
                 "name": "status",
@@ -49,22 +48,16 @@
                       },
                       "stmts": [
                         {
-                          "vardecl": {
-                            "name": "r",
-                            "value": {
-                              "funccall": {
-                                "name": "exit",
-                                "type": "int32",
-                                "args": [
-                                  {
-                                    "const": {
-                                      "value": 1,
-                                      "type": "int32"
-                                    }
-                                  }
-                                ]
+                          "funccall": {
+                            "name": "exit",
+                            "args": [
+                              {
+                                "const": {
+                                  "value": 1,
+                                  "type": "int32"
+                                }
                               }
-                            }
+                            ]
                           }
                         }
                       ]
