@@ -8,13 +8,20 @@ pub type FuncArg = (String, Type);
 pub type Variadic = bool;
 
 pub enum Decl {
-    FwdDecl(String, Visibility, Type, Vec<FuncArg>, Variadic),
-    FuncDecl(String, Visibility, Type, Vec<FuncArg>, Variadic, Vec<Stmt>),
+    FwdDecl(String, Visibility, Option<Type>, Vec<FuncArg>, Variadic),
+    FuncDecl(
+        String,
+        Visibility,
+        Option<Type>,
+        Vec<FuncArg>,
+        Variadic,
+        Vec<Stmt>,
+    ),
 }
 
 pub enum Stmt {
     Cond(Vec<Case>),
-    Ret(Expr),
+    Ret(Option<Expr>),
     VarDecl(String, Expr),
 }
 

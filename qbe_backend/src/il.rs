@@ -52,7 +52,13 @@ fn append_decl_il(decl: &Decl, il: &mut impl Write) -> fmt::Result {
                 write!(il, "{} ", linkage)?;
             }
 
-            write!(il, "function {} ${}(", r#type, name)?;
+            il.write_str("function ")?;
+
+            if let Some(r#type) = r#type {
+                write!(il, "{} ", r#type)?;
+            }
+
+            write!(il, "${}(", name)?;
 
             append_func_args_il(args, *variadic, il)?;
 
@@ -93,10 +99,11 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
                 write!(il, ", @{}, @{}", true_lbl, false_lbl)?;
             }
             Stmt::Lbl(name) => write!(il, "@{}", name)?,
-            Stmt::Ret(value) => {
+            Stmt::Ret(Some(value)) => {
                 write!(il, "{}ret ", INDENT)?;
                 append_value_il(value, false, il)?;
             }
+            Stmt::Ret(None) => write!(il, "{}ret", INDENT)?,
             Stmt::VarDecl(name, scope, expr) => {
                 write!(il, "{}{}{} ={} ", INDENT, scope, name, expr.r#type())?;
                 append_expr_il(expr, false, il)?;

@@ -4,7 +4,12 @@ use std::iter::zip;
 
 use midlang::*;
 
-type FuncSig<'a> = (&'a Visibility, &'a Type, &'a Vec<FuncArg>, &'a Variadic);
+type FuncSig<'a> = (
+    &'a Visibility,
+    &'a Option<Type>,
+    &'a Vec<FuncArg>,
+    &'a Variadic,
+);
 type FwdDecls<'a> = HashMap<&'a str, FuncSig<'a>>;
 type Res<T> = Result<T, Box<dyn Error>>;
 type Vars<'a> = HashMap<&'a str, &'a Type>;
@@ -68,10 +73,14 @@ fn check_decls(decls: &[Decl]) -> Res<()> {
 
 fn check_stmts<'a>(
     stmts: &'a [Stmt],
-    func_type: &Type,
+    func_type: &Option<Type>,
     fwd_decls: &FwdDecls,
     vars: &'a mut Vars<'a>,
 ) -> Res<()> {
+    fn ret_type_mismatch_err() -> Res<()> {
+        Err("Return statment type does not match function type".into())
+    }
+
     for stmt in stmts {
         match stmt {
             Stmt::Cond(cases) => {
@@ -81,10 +90,16 @@ fn check_stmts<'a>(
                     }
                 }
             }
-            Stmt::Ret(expr) if expr.r#type() != func_type => {
-                return Err("Return statment type does not match function type".into());
-            }
-            Stmt::Ret(expr) => check_expr(expr, fwd_decls, vars)?,
+            Stmt::Ret(ret) => match (func_type, ret) {
+                (Some(func_type), Some(expr)) if expr.r#type() != func_type => {
+                    return ret_type_mismatch_err();
+                }
+                (Some(_), None) | (None, Some(_)) => {
+                    return ret_type_mismatch_err();
+                }
+                (Some(_), Some(expr)) => check_expr(expr, fwd_decls, vars)?,
+                (None, None) => (),
+            },
             Stmt::VarDecl(name, expr) => {
                 check_expr(expr, fwd_decls, vars)?;
                 vars.insert(name, expr.r#type());
@@ -96,6 +111,13 @@ fn check_stmts<'a>(
 }
 
 fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
+    fn func_call_type_err(name: &str) -> Res<()> {
+        Err(format!(
+            "FuncCall '{}' type does not match forward declaration",
+            name
+        )
+        .into())
+    }
     fn param_count_err(name: &str) -> Res<()> {
         Err(format!(
             "FuncCall '{}' parameter count does not match forward declaration",
@@ -123,12 +145,11 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
         },
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
-                Some((_, fwd_type, _, _)) if call_type != *fwd_type => {
-                    return Err(format!(
-                        "FuncCall '{}' type does not match forward declaration",
-                        name
-                    )
-                    .into());
+                Some((_, None, _, _)) => {
+                    return func_call_type_err(name);
+                }
+                Some((_, Some(fwd_type), _, _)) if call_type != fwd_type => {
+                    return func_call_type_err(name);
                 }
                 Some((_, _, fwd_args, false)) if exprs.len() != fwd_args.len() => {
                     return param_count_err(name);
@@ -222,6 +243,15 @@ mod tests {
     }
 
     #[test]
+    fn void_main() -> TestResult {
+        let modules = mtc::void_main();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
     #[should_panic(expected = "FwdDecl mismatch for func 'main'")]
     fn func_decl_fwd_decl_mismatch() {
         let modules = [Module {
@@ -230,17 +260,44 @@ mod tests {
                 Decl::FwdDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Str,
+                    Some(Type::Str),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
-                    vec![Stmt::Ret(Expr::ConstInt32(0))],
+                    vec![Stmt::Ret(Some(Expr::ConstInt32(0)))],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "FwdDecl mismatch for func 'main'")]
+    fn func_decl_fwd_decl_mismatch2() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    None,
+                    vec![("s".to_string(), Type::Str)],
+                    false,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Some(Type::Int32),
+                    vec![],
+                    false,
+                    vec![Stmt::Ret(Some(Expr::ConstInt32(0)))],
                 ),
             ],
         }];
@@ -256,10 +313,10 @@ mod tests {
             decls: vec![Decl::FuncDecl(
                 "main".to_string(),
                 Visibility::Public,
-                Type::Int32,
+                Some(Type::Int32),
                 vec![("s".to_string(), Type::Str), ("s".to_string(), Type::Str)],
                 false,
-                vec![Stmt::Ret(Expr::ConstInt32(0))],
+                vec![Stmt::Ret(Some(Expr::ConstInt32(0)))],
             )],
         }];
 
@@ -274,7 +331,7 @@ mod tests {
             decls: vec![Decl::FuncDecl(
                 "main".to_string(),
                 Visibility::Public,
-                Type::Int32,
+                Some(Type::Int32),
                 vec![],
                 false,
                 vec![
@@ -286,7 +343,7 @@ mod tests {
                             vec![Expr::ConstStr("hello world".to_string())],
                         ),
                     ),
-                    Stmt::Ret(Expr::ConstInt32(0)),
+                    Stmt::Ret(Some(Expr::ConstInt32(0))),
                 ],
             )],
         }];
@@ -302,10 +359,28 @@ mod tests {
             decls: vec![Decl::FuncDecl(
                 "main".to_string(),
                 Visibility::Public,
-                Type::Int32,
+                Some(Type::Int32),
                 vec![],
                 false,
-                vec![Stmt::Ret(Expr::ConstStr("hello world".to_string()))],
+                vec![Stmt::Ret(Some(Expr::ConstStr("hello world".to_string())))],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Return statment type does not match function type")]
+    fn func_ret_type_mismatch2() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Some(Type::Int32),
+                vec![],
+                false,
+                vec![Stmt::Ret(None)],
             )],
         }];
 
@@ -320,10 +395,13 @@ mod tests {
             decls: vec![Decl::FuncDecl(
                 "main".to_string(),
                 Visibility::Public,
-                Type::Int32,
+                Some(Type::Int32),
                 vec![],
                 false,
-                vec![Stmt::Ret(Expr::VarRef("missing".to_string(), Type::Int32))],
+                vec![Stmt::Ret(Some(Expr::VarRef(
+                    "missing".to_string(),
+                    Type::Int32,
+                )))],
             )],
         }];
 
@@ -338,12 +416,12 @@ mod tests {
             decls: vec![Decl::FuncDecl(
                 "main".to_string(),
                 Visibility::Public,
-                Type::Int32,
+                Some(Type::Int32),
                 vec![],
                 false,
                 vec![
                     Stmt::VarDecl("x".to_string(), Expr::ConstBool(true)),
-                    Stmt::Ret(Expr::VarRef("x".to_string(), Type::Int32)),
+                    Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32))),
                 ],
             )],
         }];
@@ -360,14 +438,14 @@ mod tests {
                 Decl::FwdDecl(
                     "puts".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -375,7 +453,7 @@ mod tests {
                             "r".to_string(),
                             Expr::FuncCall("puts".to_string(), Type::Int32, vec![]),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -393,14 +471,14 @@ mod tests {
                 Decl::FwdDecl(
                     "puts".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -415,7 +493,7 @@ mod tests {
                                 ],
                             ),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -435,14 +513,14 @@ mod tests {
                 Decl::FwdDecl(
                     "puts".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -454,7 +532,7 @@ mod tests {
                                 vec![Expr::ConstInt32(1)],
                             ),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -474,24 +552,24 @@ mod tests {
                 Decl::FwdDecl(
                     "puts".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FwdDecl(
                     "not_ok".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("s".to_string(), Type::Str)],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
-                    vec![Stmt::Ret(Expr::FuncCall(
+                    vec![Stmt::Ret(Some(Expr::FuncCall(
                         "not_ok".to_string(),
                         Type::Int32,
                         vec![Expr::FuncCall(
@@ -499,7 +577,7 @@ mod tests {
                             Type::Int32,
                             vec![Expr::ConstStr("hello world".to_string())],
                         )],
-                    ))],
+                    )))],
                 ),
             ],
         }];
@@ -518,14 +596,14 @@ mod tests {
                 Decl::FwdDecl(
                     "printf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("fmt".to_string(), Type::Str)],
                     true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -533,7 +611,7 @@ mod tests {
                             "r1".to_string(),
                             Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -551,14 +629,14 @@ mod tests {
                 Decl::FwdDecl(
                     "printf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -566,7 +644,7 @@ mod tests {
                             "r1".to_string(),
                             Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -584,14 +662,14 @@ mod tests {
                 Decl::FwdDecl(
                     "printf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     true,
                     vec![
@@ -599,7 +677,7 @@ mod tests {
                             "r1".to_string(),
                             Expr::FuncCall("printf".to_string(), Type::Int32, vec![]),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -619,14 +697,14 @@ mod tests {
                 Decl::FwdDecl(
                     "printf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![("fmt".to_string(), Type::Str)],
                     true,
                 ),
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -638,7 +716,7 @@ mod tests {
                                 vec![Expr::ConstInt32(1)],
                             ),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -658,7 +736,7 @@ mod tests {
                 Decl::FwdDecl(
                     "printnf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![
                         ("fmt".to_string(), Type::Str),
                         ("n".to_string(), Type::Int32),
@@ -668,7 +746,7 @@ mod tests {
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -680,7 +758,7 @@ mod tests {
                                 vec![Expr::ConstStr("hello world".to_string())],
                             ),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -700,7 +778,7 @@ mod tests {
                 Decl::FwdDecl(
                     "printnf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![
                         ("fmt".to_string(), Type::Str),
                         ("n".to_string(), Type::Int32),
@@ -710,7 +788,7 @@ mod tests {
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -725,7 +803,7 @@ mod tests {
                                 ],
                             ),
                         ),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
@@ -743,7 +821,7 @@ mod tests {
                 Decl::FwdDecl(
                     "printnf".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![
                         ("fmt".to_string(), Type::Str),
                         ("n".to_string(), Type::Int32),
@@ -753,7 +831,7 @@ mod tests {
                 Decl::FuncDecl(
                     "main".to_string(),
                     Visibility::Public,
-                    Type::Int32,
+                    Some(Type::Int32),
                     vec![],
                     false,
                     vec![
@@ -771,7 +849,7 @@ mod tests {
                                 ),
                             )],
                         )]),
-                        Stmt::Ret(Expr::ConstInt32(0)),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
                     ],
                 ),
             ],
