@@ -13,13 +13,25 @@ use lower::lower;
 
 use midlang as m;
 
-pub struct Backend {}
-
-pub fn new() -> Backend {
-    Backend {}
+pub struct Backend<'a> {
+    libraries: &'a Vec<String>,
+    library_paths: &'a Vec<String>,
+    output: &'a String,
 }
 
-impl compiler::Backend for Backend {
+pub fn new<'a>(
+    libraries: &'a Vec<String>,
+    library_paths: &'a Vec<String>,
+    output: &'a String,
+) -> Backend<'a> {
+    Backend {
+        libraries,
+        library_paths,
+        output,
+    }
+}
+
+impl compiler::Backend for Backend<'_> {
     fn generate_build_artifacts(
         &self,
         modules: &[m::Module],
@@ -28,17 +40,37 @@ impl compiler::Backend for Backend {
         let comp_units = lower(modules);
         let build_artifacts = generate_il(&comp_units)?;
 
-        configure_ninja_build(&build_artifacts, ninja_writer);
+        set_link_flags_var(self.libraries, self.library_paths, ninja_writer);
+        configure_ninja_build(&build_artifacts, self.output, ninja_writer);
 
         Ok(build_artifacts)
     }
 }
 
-fn configure_ninja_build(build_artifacts: &compiler::BuildArtifacts, ninja_writer: &mut Ninja) {
+fn set_link_flags_var(libraries: &[String], library_paths: &[String], ninja_writer: &mut Ninja) {
+    let mut link_flags = libraries
+        .iter()
+        .map(|l| format!("-l{}", l))
+        .collect::<Vec<_>>();
+
+    link_flags.extend(
+        library_paths
+            .iter()
+            .map(|l| format!("-L{}", l))
+            .collect::<Vec<_>>(),
+    );
+
+    ninja_writer.variable("link_flags", link_flags.join(" "));
+}
+
+fn configure_ninja_build(
+    build_artifacts: &compiler::BuildArtifacts,
+    output: &String,
+    ninja_writer: &mut Ninja,
+) {
     let qbe = ninja_writer.rule("qbe", "qbe -o $out $in");
     let cc = ninja_writer.rule("cc", "cc -o $out -c $in");
-    let link = ninja_writer.rule("link", "cc -o $out $in");
-    let output = "a.out";
+    let link = ninja_writer.rule("link", "cc -o $out $link_flags $in");
     let mut objs = Vec::<String>::with_capacity(build_artifacts.len());
 
     for (il, _) in build_artifacts {
@@ -72,12 +104,20 @@ mod tests {
 
     type TestResult = Result<(), Box<dyn Error>>;
 
+    fn generate_build_artifacts(
+        modules: &[m::Module],
+        ninja_writer: &mut Ninja,
+    ) -> compiler::BackendResult {
+        let output = "a.out".to_string();
+        new(&vec![], &vec![], &output).generate_build_artifacts(modules, ninja_writer)
+    }
+
     #[test]
     fn hello_world() -> TestResult {
         let modules = mtc::hello_world();
 
         let mut ninja_writer = Ninja::new();
-        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
         assert_eq!(ba.len(), 1);
         assert_eq!(ba[0].0, "hello_world.il");
 
@@ -102,7 +142,7 @@ mod tests {
         let modules = mtc::hello_world2();
 
         let mut ninja_writer = Ninja::new();
-        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
         assert_eq!(ba.len(), 2);
         assert_eq!(ba[0].0, "hello_world2.il");
         assert_eq!(ba[1].0, "hello_world2_sayer.il");
@@ -142,7 +182,7 @@ mod tests {
         let modules = mtc::hello_world_cond();
 
         let mut ninja_writer = Ninja::new();
-        let ba = new().generate_build_artifacts(&modules, &mut ninja_writer)?;
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
         assert_eq!(ba.len(), 1);
         assert_eq!(ba[0].0, "hello_world_cond.il");
 
