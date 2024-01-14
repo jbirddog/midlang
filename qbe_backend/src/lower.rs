@@ -38,7 +38,7 @@ fn lower_decls(decls: &[m::Decl], ctx: &mut LoweringCtx) -> Vec<Decl> {
                 Some(Decl::FuncDecl(
                     name.to_string(),
                     lower_visibility(visibility),
-                    lower_type(r#type),
+                    lower_opt_type(r#type),
                     lower_args(args),
                     *variadic,
                     stmts,
@@ -78,10 +78,11 @@ fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx
 
                 stmts.push(Stmt::Lbl(end_lbl));
             }
-            m::Stmt::Ret(expr) => {
+            m::Stmt::Ret(Some(expr)) => {
                 let value = lower_expr_to_value(expr, stmts, ctx);
-                stmts.push(Stmt::Ret(value));
+                stmts.push(Stmt::Ret(Some(value)));
             }
+            m::Stmt::Ret(None) => stmts.push(Stmt::Ret(None)),
             m::Stmt::VarDecl(name, expr) => {
                 let expr = lower_expr(expr, stmts, ctx);
                 stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
@@ -163,6 +164,10 @@ fn lower_type(r#type: &m::Type) -> Type {
         m::Type::Bool | m::Type::Int32 => Type::W,
         m::Type::Int64 | m::Type::Ptr | m::Type::Str => Type::L,
     }
+}
+
+fn lower_opt_type(r#type: &Option<m::Type>) -> Option<Type> {
+    r#type.as_ref().map(lower_type)
 }
 
 fn lbl(name: &str) -> Stmt {

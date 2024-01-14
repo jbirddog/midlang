@@ -20,14 +20,14 @@ pub enum Decl {
     FwdDecl {
         name: String,
         visibility: Visibility,
-        r#type: Type,
+        r#type: Option<Type>,
         args: Vec<FuncArg>,
         variadic: Option<bool>,
     },
     FuncDecl {
         name: String,
         visibility: Visibility,
-        r#type: Type,
+        r#type: Option<Type>,
         args: Vec<FuncArg>,
         variadic: Option<bool>,
         stmts: Vec<Stmt>,
@@ -45,7 +45,7 @@ pub struct FuncArg {
 #[serde(rename_all = "lowercase")]
 pub enum Stmt {
     Cond { cases: Vec<Case> },
-    Ret { value: Expr },
+    Ret { value: Option<Expr> },
     VarDecl { name: String, value: Expr },
 }
 

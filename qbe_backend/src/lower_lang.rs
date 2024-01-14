@@ -15,7 +15,7 @@ pub enum Decl {
     FuncDecl(
         String,
         Option<Linkage>,
-        Type,
+        Option<Type>,
         Vec<FuncArg>,
         Variadic,
         Vec<Stmt>,
@@ -26,7 +26,7 @@ pub enum Stmt {
     Jmp(String),
     Jnz(Value, String, String),
     Lbl(String),
-    Ret(Value),
+    Ret(Option<Value>),
     VarDecl(String, Scope, Expr),
 }
 
