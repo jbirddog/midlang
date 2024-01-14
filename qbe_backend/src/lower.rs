@@ -78,6 +78,10 @@ fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx
 
                 stmts.push(Stmt::Lbl(end_lbl));
             }
+            m::Stmt::FuncCall(name, values) => {
+                let values = lower_exprs_to_values(values, stmts, ctx);
+                stmts.push(Stmt::FuncCall(name.to_string(), values))
+            }
             m::Stmt::Ret(Some(expr)) => {
                 let value = lower_expr_to_value(expr, stmts, ctx);
                 stmts.push(Stmt::Ret(Some(value)));
@@ -112,8 +116,8 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
             let name = ctx.name_for_str(s);
             Value::VarRef(name, Type::L, Scope::Global)
         }
-        m::Expr::FuncCall(name, r#type, args) => {
-            let expr = lower_func_call(name, r#type, args, stmts, ctx);
+        m::Expr::FuncCall(name, r#type, exprs) => {
+            let expr = lower_func_call(name, r#type, exprs, stmts, ctx);
             let r#type = expr.r#type();
             let name = ctx.uniq_name("arg_");
 
@@ -137,18 +141,18 @@ fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> E
             let value = lower_expr_to_value(expr, stmts, ctx);
             Expr::Value(value)
         }
-        m::Expr::FuncCall(name, r#type, args) => lower_func_call(name, r#type, args, stmts, ctx),
+        m::Expr::FuncCall(name, r#type, exprs) => lower_func_call(name, r#type, exprs, stmts, ctx),
     }
 }
 
 fn lower_func_call(
     name: &str,
     r#type: &m::Type,
-    args: &[m::Expr],
+    exprs: &[m::Expr],
     stmts: &mut Vec<Stmt>,
     ctx: &mut LoweringCtx,
 ) -> Expr {
-    let values = lower_exprs_to_values(args, stmts, ctx);
+    let values = lower_exprs_to_values(exprs, stmts, ctx);
     Expr::FuncCall(name.to_string(), lower_type(r#type), values)
 }
 

@@ -108,7 +108,7 @@ pub fn hello_world_cond() -> Vec<Module> {
             Decl::FwdDecl(
                 "exit".to_string(),
                 Visibility::Public,
-                Some(Type::Int32),
+                None,
                 vec![("status".to_string(), Type::Int32)],
                 false,
             ),
@@ -122,13 +122,9 @@ pub fn hello_world_cond() -> Vec<Module> {
                     Stmt::Cond(vec![
                         (
                             Expr::ConstBool(false),
-                            vec![Stmt::VarDecl(
-                                "r".to_string(),
-                                Expr::FuncCall(
-                                    "exit".to_string(),
-                                    Type::Int32,
-                                    vec![Expr::ConstInt32(1)],
-                                ),
+                            vec![Stmt::FuncCall(
+                                "exit".to_string(),
+                                vec![Expr::ConstInt32(1)],
                             )],
                         ),
                         (

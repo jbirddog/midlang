@@ -3,7 +3,7 @@ export function w $main() {
 @start
     jnz 0, @cond_case_0, @cond_case_0_end
 @cond_case_0
-    %r =w call $exit(w 1)
+    call $exit(w 1)
     jmp @cond_end
 @cond_case_0_end
     jnz 1, @cond_case_1, @cond_case_1_end

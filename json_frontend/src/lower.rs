@@ -98,6 +98,9 @@ fn lower_stmts(stmts: &[Stmt]) -> Res<Vec<m::Stmt>> {
 fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
     match stmt {
         Stmt::Cond { cases } => Ok(m::Stmt::Cond(lower_cases(cases)?)),
+        Stmt::FuncCall { name, args } => {
+            Ok(m::Stmt::FuncCall(name.to_string(), lower_exprs(args)?))
+        }
         Stmt::Ret { value: Some(value) } => Ok(m::Stmt::Ret(Some(lower_expr(value)?))),
         Stmt::Ret { value: None } => Ok(m::Stmt::Ret(None)),
         Stmt::VarDecl { name, value } => Ok(m::Stmt::VarDecl(name.to_string(), lower_expr(value)?)),

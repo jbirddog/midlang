@@ -45,7 +45,7 @@ check: fmt-check clippy-check
 clean:
 	@rm -rf $(BUILD_DIR)
 
-start: hello-world2
+start: hello-world-cond
 	@/bin/true
 
 hello-world:
