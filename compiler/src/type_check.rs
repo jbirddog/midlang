@@ -90,6 +90,7 @@ fn check_stmts<'a>(
                     }
                 }
             }
+            Stmt::FuncCall(_, exprs) => check_exprs(exprs, fwd_decls, vars)?,
             Stmt::Ret(ret) => match (func_type, ret) {
                 (Some(func_type), Some(expr)) if expr.r#type() != func_type => {
                     return ret_type_mismatch_err();
@@ -105,6 +106,14 @@ fn check_stmts<'a>(
                 vars.insert(name, expr.r#type());
             }
         }
+    }
+
+    Ok(())
+}
+
+fn check_exprs(exprs: &[Expr], fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
+    for expr in exprs {
+        check_expr(expr, fwd_decls, vars)?;
     }
 
     Ok(())
@@ -173,9 +182,7 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
                 }
             }
 
-            for expr in exprs {
-                check_expr(expr, fwd_decls, vars)?;
-            }
+            check_exprs(exprs, fwd_decls, vars)?;
         }
     }
 

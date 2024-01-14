@@ -45,6 +45,7 @@ pub struct FuncArg {
 #[serde(rename_all = "lowercase")]
 pub enum Stmt {
     Cond { cases: Vec<Case> },
+    FuncCall { name: String, args: Vec<Expr> },
     Ret { value: Option<Expr> },
     VarDecl { name: String, value: Expr },
 }

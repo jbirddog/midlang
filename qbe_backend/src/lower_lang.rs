@@ -23,6 +23,7 @@ pub enum Decl {
 }
 
 pub enum Stmt {
+    FuncCall(String, Vec<Value>),
     Jmp(String),
     Jnz(Value, String, String),
     Lbl(String),

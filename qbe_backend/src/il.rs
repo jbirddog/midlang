@@ -89,9 +89,34 @@ fn append_func_args_il(args: &[FuncArg], variadic: bool, il: &mut impl Write) ->
     Ok(())
 }
 
+fn append_func_call_il(
+    name: &str,
+    values: &[Value],
+    indent: bool,
+    il: &mut impl Write,
+) -> fmt::Result {
+    if indent {
+        il.write_str(INDENT)?;
+    }
+    write!(il, "call ${}(", name)?;
+
+    for (i, value) in values.iter().enumerate() {
+        if i > 0 {
+            il.write_str(", ")?;
+        }
+
+        append_value_il(value, true, il)?;
+    }
+
+    il.write_str(")")?;
+
+    Ok(())
+}
+
 fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
     for stmt in stmts {
         match stmt {
+            Stmt::FuncCall(name, values) => append_func_call_il(name, values, true, il)?,
             Stmt::Jmp(lbl) => write!(il, "{}jmp @{}", INDENT, lbl)?,
             Stmt::Jnz(value, true_lbl, false_lbl) => {
                 write!(il, "{}jnz ", INDENT)?;
@@ -119,19 +144,7 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
 fn append_expr_il(expr: &Expr, type_consts: bool, il: &mut impl Write) -> fmt::Result {
     match expr {
         Expr::Value(value) => append_value_il(value, type_consts, il)?,
-        Expr::FuncCall(name, _, values) => {
-            write!(il, "call ${}(", name)?;
-
-            for (i, value) in values.iter().enumerate() {
-                if i > 0 {
-                    il.write_str(", ")?;
-                }
-
-                append_value_il(value, true, il)?;
-            }
-
-            il.write_str(")")?;
-        }
+        Expr::FuncCall(name, _, values) => append_func_call_il(name, values, false, il)?,
     }
 
     Ok(())

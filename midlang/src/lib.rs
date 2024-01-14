@@ -21,6 +21,7 @@ pub enum Decl {
 
 pub enum Stmt {
     Cond(Vec<Case>),
+    FuncCall(String, Vec<Expr>),
     Ret(Option<Expr>),
     VarDecl(String, Expr),
 }
