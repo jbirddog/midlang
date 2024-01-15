@@ -37,6 +37,9 @@ jobs:
         test-case: ["hello-world", "hello-world2", "hello-world-cond"]
 
     steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: actions/download-artifact@v3
       with:
         name: midlang
