@@ -12,14 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        test-case: ["hello-world", "hello-world2", "hello-world-cond"]
     
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
 
-    - name: Create dev image, compile and test
+    - name: Create dev image, compile
       run: make
+
+    - name: Run tests
+      run: make tests
 
     - name: Check fmt and clippy
       run: make check
+
+    - name: Compile and run ${{ matrix.test-case }}
+      run: make ${{ matrix.test-case }}

@@ -12,7 +12,9 @@ DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
-all: dev-env compile tests hello-world usage
+include $(TEST_CASES_DIR)/include.mk
+
+all: dev-env compile
 
 dev-env:
 	docker build --progress=plain -t $(DOCKER_IMG) .
@@ -48,29 +50,6 @@ clean:
 start: hello-world-cond
 	@/bin/true
 
-hello-world:
-	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world.json \
-		--build-dir $(BUILD_DIR)/hello_world \
-		--ninja samu \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world/a.out
-
-hello-world2:
-	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world2.json \
-		--build-dir $(BUILD_DIR)/hello_world2 \
-		--ninja samu \
-		-o hello_world \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world2/a.out
-
-hello-world-cond:
-	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world_cond.json \
-		--build-dir $(BUILD_DIR)/hello_world_cond \
-		--ninja samu \
-		-o hello_world \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world_cond/hello_world
-
 usage:
 	$(IN_DEV) $(MLC) --help
 
@@ -85,7 +64,6 @@ check-ownership:
 
 .PHONY: all \
 	dev-env sh \
-	compile test start clean \
+	compile test usage start clean \
 	fmt fmt-check fmt-json clippy clippy-check check \
-	check-ownership take-ownership \
-	hello-world hello-world2 usage
+	check-ownership take-ownership
