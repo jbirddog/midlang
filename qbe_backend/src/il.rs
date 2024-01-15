@@ -141,30 +141,28 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
     Ok(())
 }
 
-fn append_expr_il(expr: &Expr, type_consts: bool, il: &mut impl Write) -> fmt::Result {
+fn append_expr_il(expr: &Expr, type_values: bool, il: &mut impl Write) -> fmt::Result {
     match expr {
-        Expr::Value(value) => append_value_il(value, type_consts, il)?,
+        Expr::Value(value) => append_value_il(value, type_values, il)?,
         Expr::FuncCall(name, _, values) => append_func_call_il(name, values, false, il)?,
     }
 
     Ok(())
 }
 
-fn append_value_il(value: &Value, type_consts: bool, il: &mut impl Write) -> fmt::Result {
+fn append_value_il(value: &Value, type_values: bool, il: &mut impl Write) -> fmt::Result {
+    if type_values {
+        write!(il, "{} ", value.r#type())?;
+    }
+
     match value {
         Value::ConstL(v) => {
-            if type_consts {
-                write!(il, "{} ", value.r#type())?;
-            }
             write!(il, "{}", v)?;
         }
         Value::ConstW(v) => {
-            if type_consts {
-                write!(il, "{} ", value.r#type())?;
-            }
             write!(il, "{}", v)?;
         }
-        Value::VarRef(name, r#type, scope) => write!(il, "{} {}{}", r#type, scope, name)?,
+        Value::VarRef(name, _, scope) => write!(il, "{}{}", scope, name)?,
     }
 
     Ok(())
