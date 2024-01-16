@@ -8,6 +8,10 @@ use crate::lower_lang::*;
 const IL_BUFFER_CAPACITY: usize = 1024;
 const INDENT: &str = "    ";
 
+const RENDER_VALUE_PLAIN: u8 = 0;
+const RENDER_VALUE_TYPES: u8 = 1 << 0;
+const RENDER_VALUE_COPY_LITERALS: u8 = 1 << 1;
+
 pub fn generate_il(comp_units: &[CompUnit]) -> Result<BuildArtifacts, fmt::Error> {
     let mut build_artifacts = BuildArtifacts::with_capacity(comp_units.len());
 
@@ -105,7 +109,7 @@ fn append_func_call_il(
             il.write_str(", ")?;
         }
 
-        append_value_il(value, true, il)?;
+        append_value_il(value, RENDER_VALUE_TYPES, il)?;
     }
 
     il.write_str(")")?;
@@ -120,18 +124,18 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
             Stmt::Jmp(lbl) => write!(il, "{}jmp @{}", INDENT, lbl)?,
             Stmt::Jnz(value, true_lbl, false_lbl) => {
                 write!(il, "{}jnz ", INDENT)?;
-                append_value_il(value, false, il)?;
+                append_value_il(value, RENDER_VALUE_PLAIN, il)?;
                 write!(il, ", @{}, @{}", true_lbl, false_lbl)?;
             }
             Stmt::Lbl(name) => write!(il, "@{}", name)?,
             Stmt::Ret(Some(value)) => {
                 write!(il, "{}ret ", INDENT)?;
-                append_value_il(value, false, il)?;
+                append_value_il(value, RENDER_VALUE_PLAIN, il)?;
             }
             Stmt::Ret(None) => write!(il, "{}ret", INDENT)?,
             Stmt::VarDecl(name, scope, expr) => {
                 write!(il, "{}{}{} ={} ", INDENT, scope, name, expr.r#type())?;
-                append_expr_il(expr, false, il)?;
+                append_expr_il(expr, RENDER_VALUE_COPY_LITERALS, il)?;
             }
         }
 
@@ -141,25 +145,33 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
     Ok(())
 }
 
-fn append_expr_il(expr: &Expr, type_values: bool, il: &mut impl Write) -> fmt::Result {
+fn append_expr_il(expr: &Expr, value_render_flags: u8, il: &mut impl Write) -> fmt::Result {
     match expr {
-        Expr::Value(value) => append_value_il(value, type_values, il)?,
+        Expr::Value(value) => append_value_il(value, value_render_flags, il)?,
         Expr::FuncCall(name, _, values) => append_func_call_il(name, values, false, il)?,
     }
 
     Ok(())
 }
 
-fn append_value_il(value: &Value, type_values: bool, il: &mut impl Write) -> fmt::Result {
-    if type_values {
+fn append_value_il(value: &Value, render_flags: u8, il: &mut impl Write) -> fmt::Result {
+    if render_flags & RENDER_VALUE_TYPES != 0 {
         write!(il, "{} ", value.r#type())?;
     }
 
     match value {
         Value::ConstL(v) => {
+            if render_flags & RENDER_VALUE_COPY_LITERALS != 0 {
+                il.write_str("copy ")?;
+            }
+
             write!(il, "{}", v)?;
         }
         Value::ConstW(v) => {
+            if render_flags & RENDER_VALUE_COPY_LITERALS != 0 {
+                il.write_str("copy ")?;
+            }
+
             write!(il, "{}", v)?;
         }
         Value::VarRef(name, _, scope) => write!(il, "{}{}", scope, name)?,

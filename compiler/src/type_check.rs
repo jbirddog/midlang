@@ -84,10 +84,12 @@ fn check_stmts<'a>(
     for stmt in stmts {
         match stmt {
             Stmt::Cond(cases) => {
-                for (expr, _) in cases {
+                for (expr, stmts) in cases {
                     if *expr.r#type() != Type::Bool {
                         return Err("Cond case expressions must be of type bool".into());
                     }
+                    let mut cond_vars = vars.clone();
+                    check_stmts(stmts, func_type, fwd_decls, &mut cond_vars)?;
                 }
             }
             Stmt::FuncCall(_, exprs) => check_exprs(exprs, fwd_decls, vars)?,
@@ -111,7 +113,7 @@ fn check_stmts<'a>(
     Ok(())
 }
 
-fn check_exprs(exprs: &[Expr], fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
+fn check_exprs(exprs: &[Expr], fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
     for expr in exprs {
         check_expr(expr, fwd_decls, vars)?;
     }
@@ -119,7 +121,7 @@ fn check_exprs(exprs: &[Expr], fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()>
     Ok(())
 }
 
-fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &mut Vars) -> Res<()> {
+fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
     fn func_call_type_err(name: &str) -> Res<()> {
         Err(format!(
             "FuncCall '{}' type does not match forward declaration",
