@@ -1,5 +1,8 @@
 # midlang
-Language Frontends Can Target This
+
+_Language frontends can target this._
+
+`midlang` is a compiler toolchain that provides the middle and backend components for a traditional compiler. While `midlang` itself does not have a traditional textual representation, `json_lang` exists as a [narrow waist](https://www.oilshell.org/cross-ref.html?tag=narrow-waist#narrow-waist). Rust frontends can directly leverage the crates in this repository.  
 
 
 ## Backends
