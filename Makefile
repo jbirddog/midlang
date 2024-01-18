@@ -5,7 +5,7 @@ ME := $(MY_USER):$(MY_GROUP)
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
 BUILD_DIR ?= build
-NINJA ?= samu
+NINJA ?= ninja
 MLC ?= ./target/debug/mlc
 DOCKER_IMG := midlang
 DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .:/app $(DOCKER_IMG)
@@ -52,14 +52,14 @@ hello-world:
 	$(IN_DEV) $(MLC) \
 		--json-file $(TEST_CASES_DIR)/json/hello_world.json \
 		--build-dir $(BUILD_DIR)/hello_world \
-		--ninja samu \
+		--ninja $(NINJA) \
 	&& $(IN_DEV) $(BUILD_DIR)/hello_world/a.out
 
 hello-world2:
 	$(IN_DEV) $(MLC) \
 		--json-file $(TEST_CASES_DIR)/json/hello_world2.json \
 		--build-dir $(BUILD_DIR)/hello_world2 \
-		--ninja samu \
+		--ninja $(NINJA) \
 		-o hello_world \
 	&& $(IN_DEV) $(BUILD_DIR)/hello_world2/a.out
 
@@ -67,7 +67,7 @@ hello-world-cond:
 	$(IN_DEV) $(MLC) \
 		--json-file $(TEST_CASES_DIR)/json/hello_world_cond.json \
 		--build-dir $(BUILD_DIR)/hello_world_cond \
-		--ninja samu \
+		--ninja $(NINJA) \
 		-o hello_world \
 	&& $(IN_DEV) $(BUILD_DIR)/hello_world_cond/hello_world
 
@@ -75,7 +75,7 @@ usage:
 	$(IN_DEV) $(MLC) --help
 
 sh:
-	$(IN_IDEV) /bin/sh
+	$(IN_IDEV) /bin/bash
 
 take-ownership:
 	sudo chown -R $(ME) .
