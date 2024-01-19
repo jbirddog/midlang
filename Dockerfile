@@ -2,11 +2,12 @@ FROM rust:slim
 
 WORKDIR /app
 
-RUN apt-get update -q \
-    && apt-get install -y -q \
+RUN apt-get update \
+    && apt-get install -y \
        make \
        ninja-build \
-       jq
+       jq \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./ ./
 
