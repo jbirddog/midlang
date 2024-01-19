@@ -1,8 +1,13 @@
-FROM rust:alpine
+FROM rust:slim
 
 WORKDIR /app
 
-RUN apk add -U gcc musl-dev make samurai jq
+RUN apt-get update \
+    && apt-get install -y \
+       make \
+       ninja-build \
+       jq \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./ ./
 
