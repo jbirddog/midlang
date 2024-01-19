@@ -1,9 +1,10 @@
-FROM rust:latest
+FROM rust:slim
 
 WORKDIR /app
 
 RUN apt-get update -q \
     && apt-get install -y -q \
+       make \
        ninja-build \
        jq
 
