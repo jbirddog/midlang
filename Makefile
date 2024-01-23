@@ -4,6 +4,7 @@ ME := $(MY_USER):$(MY_GROUP)
 
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
+TEST_CASE ?= hello_world
 BUILD_DIR ?= build
 NINJA ?= ninja
 MLC ?= ./target/debug/mlc
@@ -11,6 +12,8 @@ DOCKER_IMG := midlang
 DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .:/app $(DOCKER_IMG)
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
+
+include integration.mk
 
 all: dev-env compile tests hello-world usage
 
@@ -45,31 +48,18 @@ check: fmt-check clippy-check
 clean:
 	@rm -rf $(BUILD_DIR)
 
-start: hello-world-cond
+start: hello_world_cond
 	@/bin/true
 
-hello-world:
+test-compile:
 	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world.json \
-		--build-dir $(BUILD_DIR)/hello_world \
+		--json-file $(TEST_CASES_DIR)/json/$(TEST_CASE).json \
+		--build-dir $(BUILD_DIR)/$(TEST_CASE) \
 		--ninja $(NINJA) \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world/a.out
+		-o $(TEST_CASE)
 
-hello-world2:
-	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world2.json \
-		--build-dir $(BUILD_DIR)/hello_world2 \
-		--ninja $(NINJA) \
-		-o hello_world \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world2/a.out
-
-hello-world-cond:
-	$(IN_DEV) $(MLC) \
-		--json-file $(TEST_CASES_DIR)/json/hello_world_cond.json \
-		--build-dir $(BUILD_DIR)/hello_world_cond \
-		--ninja $(NINJA) \
-		-o hello_world \
-	&& $(IN_DEV) $(BUILD_DIR)/hello_world_cond/hello_world
+test-run:
+	$(IN_DEV) $(BUILD_DIR)/$(TEST_CASE)/$(TEST_CASE)
 
 usage:
 	$(IN_DEV) $(MLC) --help
@@ -87,5 +77,5 @@ check-ownership:
 	dev-env sh \
 	compile test start clean \
 	fmt fmt-check fmt-json clippy clippy-check check \
-	check-ownership take-ownership \
-	hello-world hello-world2 usage
+	check-ownership take-ownership  usage \
+	test-compile test-run
