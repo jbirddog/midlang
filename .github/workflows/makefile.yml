@@ -18,8 +18,17 @@ jobs:
       with:
         submodules: true
 
-    - name: Create dev image, compile and test
-      run: make
+    - name: Create dev image
+      run: make dev-env
+
+    - name: Compile
+      run: make compile
 
     - name: Check fmt and clippy
       run: make check
+
+    - name: Unit tests
+      run: make tests
+
+    - name: Integration tests
+      run: make integration-tests
