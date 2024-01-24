@@ -160,6 +160,13 @@ fn append_value_il(value: &Value, render_flags: u8, il: &mut impl Write) -> fmt:
     }
 
     match value {
+        Value::ConstD(v) => {
+            if render_flags & RENDER_VALUE_COPY_LITERALS != 0 {
+                il.write_str("copy ")?;
+            }
+
+            write!(il, "d_{}", v)?;
+        }
         Value::ConstL(v) => {
             if render_flags & RENDER_VALUE_COPY_LITERALS != 0 {
                 il.write_str("copy ")?;

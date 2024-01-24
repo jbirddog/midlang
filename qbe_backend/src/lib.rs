@@ -70,7 +70,7 @@ fn configure_ninja_build(
 ) {
     let qbe = ninja_writer.rule("qbe", "qbe -o $out $in");
     let cc = ninja_writer.rule("cc", "cc -o $out -c $in");
-    let link = ninja_writer.rule("link", "cc -o $out $link_flags $in");
+    let link = ninja_writer.rule("link", "cc -o $out $in $link_flags");
     let mut objs = Vec::<String>::with_capacity(build_artifacts.len());
 
     for (il, _) in build_artifacts {

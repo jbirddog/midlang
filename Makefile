@@ -56,6 +56,7 @@ test-compile:
 		--json-file $(TEST_CASES_DIR)/json/$(TEST_CASE).json \
 		--build-dir $(BUILD_DIR)/$(TEST_CASE) \
 		--ninja $(NINJA) \
+		-lm \
 		-o $(TEST_CASE)
 
 test-run:

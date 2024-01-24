@@ -110,6 +110,7 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
     match expr {
         m::Expr::ConstBool(true) => Value::ConstW(1),
         m::Expr::ConstBool(false) => Value::ConstW(0),
+        m::Expr::ConstDouble(d) => Value::ConstD(*d),
         m::Expr::ConstInt32(i) => Value::ConstW(*i),
         m::Expr::ConstInt64(i) => Value::ConstL(*i),
         m::Expr::ConstStr(s) => {
@@ -134,6 +135,7 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
 fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Expr {
     match expr {
         m::Expr::ConstBool(_)
+        | m::Expr::ConstDouble(_)
         | m::Expr::ConstInt32(_)
         | m::Expr::ConstInt64(_)
         | m::Expr::ConstStr(_)
@@ -165,6 +167,7 @@ fn lower_visibility(visibility: &m::Visibility) -> Option<Linkage> {
 
 fn lower_type(r#type: &m::Type) -> Type {
     match r#type {
+        m::Type::Double => Type::D,
         m::Type::Bool | m::Type::Int32 => Type::W,
         m::Type::Int64 | m::Type::Ptr | m::Type::Str => Type::L,
     }
