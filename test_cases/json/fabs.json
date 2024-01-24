@@ -1,7 +1,7 @@
 {
   "modules": [
     {
-      "name": "math",
+      "name": "fabs",
       "decls": [
         {
           "fwddecl": {
@@ -45,7 +45,7 @@
                   "args": [
                     {
                       "const": {
-                        "value": "The fabs of -3.14 is %f\n",
+                        "value": "The fabs of -1.23 is %f\n",
                         "type": "str"
                       }
                     },
@@ -56,7 +56,7 @@
                         "args": [
                           {
                             "const": {
-                              "value": -3.14,
+                              "value": -1.23,
                               "type": "double"
                             }
                           }

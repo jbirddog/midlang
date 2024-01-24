@@ -82,7 +82,7 @@ mod tests {
     fn math() -> TestResult {
         let path = Path::new(env!("TEST_CASES_DIR"))
             .join("json")
-            .join("math.json");
+            .join("fabs.json");
         let filename = &path.display().to_string();
 
         new(&filename).parse()?;
