@@ -74,6 +74,7 @@ fn lower_visibility(visibility: &Visibility) -> m::Visibility {
 fn lower_type(r#type: &Type) -> m::Type {
     match r#type {
         Type::Bool => m::Type::Bool,
+        Type::Double => m::Type::Double,
         Type::Int32 => m::Type::Int32,
         Type::Int64 => m::Type::Int64,
         Type::Ptr => m::Type::Ptr,
@@ -148,7 +149,13 @@ fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> 
             .ok_or_else(|| Box::from("Number is not an Int64"))
     }
 
+    fn as_f64(num: &serde_json::value::Number) -> Res<f64> {
+        num.as_f64()
+            .ok_or_else(|| Box::from("Number is not a Double"))
+    }
+
     match (num, r#type) {
+        (n, Type::Double) => Ok(m::Expr::ConstDouble(as_f64(n)?)),
         (n, Type::Int32) => Ok(m::Expr::ConstInt32(as_i32(n)?)),
         (n, Type::Int64) => Ok(m::Expr::ConstInt64(as_i64(n)?)),
         _ => Err(Box::from("Invalid number value and type")),

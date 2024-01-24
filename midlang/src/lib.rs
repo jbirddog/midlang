@@ -28,6 +28,7 @@ pub enum Stmt {
 
 pub enum Expr {
     ConstBool(bool),
+    ConstDouble(f64),
     ConstInt32(i32),
     ConstInt64(i64),
     ConstStr(String),
@@ -44,6 +45,7 @@ pub enum Visibility {
 #[derive(PartialEq)]
 pub enum Type {
     Bool,
+    Double,
     Int32,
     Int64,
     Ptr,
@@ -54,6 +56,7 @@ impl Expr {
     pub fn r#type(&self) -> &Type {
         match self {
             Self::ConstBool(_) => &Type::Bool,
+            Self::ConstDouble(_) => &Type::Double,
             Self::ConstInt32(_) => &Type::Int32,
             Self::ConstInt64(_) => &Type::Int64,
             Self::ConstStr(_) => &Type::Str,

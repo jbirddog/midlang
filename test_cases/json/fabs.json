@@ -1,0 +1,85 @@
+{
+  "modules": [
+    {
+      "name": "fabs",
+      "decls": [
+        {
+          "fwddecl": {
+            "name": "printf",
+            "visibility": "public",
+            "type": "int32",
+            "args": [
+              {
+                "name": "format",
+                "type": "str"
+              }
+            ],
+            "variadic": true
+          }
+        },
+        {
+          "fwddecl": {
+            "name": "fabs",
+            "visibility": "public",
+            "type": "double",
+            "args": [
+              {
+                "name": "x",
+                "type": "double"
+              }
+            ]
+          }
+        },
+        {
+          "funcdecl": {
+            "name": "main",
+            "visibility": "public",
+            "type": "int32",
+            "args": [],
+            "variadic": false,
+            "stmts": [
+              {
+                "funccall": {
+                  "name": "printf",
+                  "type": "int32",
+                  "args": [
+                    {
+                      "const": {
+                        "value": "The fabs of -1.23 is %f\n",
+                        "type": "str"
+                      }
+                    },
+                    {
+                      "funccall": {
+                        "name": "fabs",
+                        "type": "double",
+                        "args": [
+                          {
+                            "const": {
+                              "value": -1.23,
+                              "type": "double"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ret": {
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

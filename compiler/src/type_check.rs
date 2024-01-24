@@ -146,7 +146,11 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
     }
 
     match expr {
-        Expr::ConstBool(_) | Expr::ConstInt32(_) | Expr::ConstInt64(_) | Expr::ConstStr(_) => (),
+        Expr::ConstBool(_)
+        | Expr::ConstDouble(_)
+        | Expr::ConstInt32(_)
+        | Expr::ConstInt64(_)
+        | Expr::ConstStr(_) => (),
         Expr::VarRef(name, r#type) => match vars.get(&name as &str) {
             Some(expr_type) if *expr_type != r#type => {
                 return Err(format!("VarRef '{}' type does not match its declaration", name).into())

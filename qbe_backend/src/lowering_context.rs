@@ -34,7 +34,7 @@ impl LoweringCtx {
     pub fn decls(&self) -> Vec<Decl> {
         fn fields(value: &str) -> Vec<DataField> {
             vec![
-                (Type::B, format!("\"{}\"", value)),
+                (Type::B, format!("\"{}\"", str::replace(value, "\n", "\\n"))),
                 (Type::B, "0".to_string()),
             ]
         }

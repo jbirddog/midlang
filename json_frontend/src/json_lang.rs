@@ -86,6 +86,7 @@ pub enum Visibility {
 #[serde(rename_all = "lowercase")]
 pub enum Type {
     Bool,
+    Double,
     Int32,
     Int64,
     Ptr,

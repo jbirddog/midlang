@@ -37,6 +37,7 @@ pub enum Expr {
 }
 
 pub enum Value {
+    ConstD(f64),
     ConstL(i64),
     ConstW(i32),
     VarRef(String, Type, Scope),
@@ -49,6 +50,7 @@ pub enum Linkage {
 #[derive(Clone, Copy)]
 pub enum Type {
     B,
+    D,
     L,
     W,
 }
@@ -74,6 +76,7 @@ impl Typed for Expr {
 impl Typed for Value {
     fn r#type(&self) -> Type {
         match self {
+            Value::ConstD(_) => Type::D,
             Value::ConstL(_) => Type::L,
             Value::ConstW(_) => Type::W,
             Value::VarRef(_, r#type, _) => *r#type,
@@ -102,6 +105,7 @@ impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::B => write!(f, "b"),
+            Self::D => write!(f, "d"),
             Self::L => write!(f, "l"),
             Self::W => write!(f, "w"),
         }

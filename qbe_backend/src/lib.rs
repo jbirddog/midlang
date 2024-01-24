@@ -70,7 +70,7 @@ fn configure_ninja_build(
 ) {
     let qbe = ninja_writer.rule("qbe", "qbe -o $out $in");
     let cc = ninja_writer.rule("cc", "cc -o $out -c $in");
-    let link = ninja_writer.rule("link", "cc -o $out $link_flags $in");
+    let link = ninja_writer.rule("link", "cc -o $out $in $link_flags");
     let mut objs = Vec::<String>::with_capacity(build_artifacts.len());
 
     for (il, _) in build_artifacts {
@@ -197,6 +197,31 @@ mod tests {
         assert!(ninja_build.contains("hello_world_cond.il"));
         assert!(ninja_build.contains("hello_world_cond.s"));
         assert!(ninja_build.contains("hello_world_cond.o"));
+        assert!(ninja_build.contains("a.out"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn fabs() -> TestResult {
+        let modules = mtc::fabs();
+
+        let mut ninja_writer = Ninja::new();
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
+        assert_eq!(ba.len(), 1);
+        assert_eq!(ba[0].0, "fabs.il");
+
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("qbe")
+            .join("fabs.il");
+        let expected_il = read_to_string(&path)?;
+
+        assert_eq!(ba[0].1, expected_il);
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("fabs.il"));
+        assert!(ninja_build.contains("fabs.s"));
+        assert!(ninja_build.contains("fabs.o"));
         assert!(ninja_build.contains("a.out"));
 
         Ok(())
