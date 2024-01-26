@@ -151,7 +151,7 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
         | Expr::ConstInt32(_)
         | Expr::ConstInt64(_)
         | Expr::ConstStr(_) => (),
-        Expr::VarRef(name, r#type) => match vars.get(&name as &str) {
+        Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
             Some(expr_type) if *expr_type != r#type => {
                 return Err(format!("VarRef '{}' type does not match its declaration", name).into())
             }
@@ -174,8 +174,17 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
                 }
                 Some((_, _, fwd_args, _)) => {
                     for (i, ((_, r#type), expr)) in zip(*fwd_args, exprs).enumerate() {
-                        if r#type != expr.r#type() {
-                            return param_type_err(name, i);
+                        match (r#type, expr) {
+                            (Type::Ptr(Some(r#type)), Expr::VarRef(_, expr_type, true)) => {
+                                if r#type.as_ref() != expr_type {
+                                    return param_type_err(name, i);
+                                }
+                            }
+                            _ => {
+                                if r#type != expr.r#type() {
+                                    return param_type_err(name, i);
+                                }
+                            }
                         }
                     }
                 }
@@ -258,6 +267,24 @@ mod tests {
     #[test]
     fn void_main() -> TestResult {
         let modules = mtc::void_main();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn fabs() -> TestResult {
+        let modules = mtc::fabs();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn frexp() -> TestResult {
+        let modules = mtc::frexp();
 
         type_check(&modules)?;
 
@@ -414,6 +441,7 @@ mod tests {
                 vec![Stmt::Ret(Some(Expr::VarRef(
                     "missing".to_string(),
                     Type::Int32,
+                    false,
                 )))],
             )],
         }];
@@ -434,7 +462,7 @@ mod tests {
                 false,
                 vec![
                     Stmt::VarDecl("x".to_string(), Expr::ConstBool(true)),
-                    Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32))),
+                    Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32, false))),
                 ],
             )],
         }];
@@ -543,6 +571,52 @@ mod tests {
                                 "puts".to_string(),
                                 Type::Int32,
                                 vec![Expr::ConstInt32(1)],
+                            ),
+                        ),
+                        Stmt::Ret(Some(Expr::ConstInt32(0))),
+                    ],
+                ),
+            ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "FuncCall 'frexp' parameter 1 type does not match forward declaration"
+    )]
+    fn func_call_by_ref_type_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![
+                Decl::FwdDecl(
+                    "frexp".to_string(),
+                    Visibility::Public,
+                    Some(Type::Double),
+                    vec![
+                        ("x".to_string(), Type::Double),
+                        ("exp".to_string(), Type::Ptr(Some(Box::new(Type::Int32)))),
+                    ],
+                    false,
+                ),
+                Decl::FuncDecl(
+                    "main".to_string(),
+                    Visibility::Public,
+                    Some(Type::Int32),
+                    vec![],
+                    false,
+                    vec![
+                        Stmt::VarDecl("bad_exp".to_string(), Expr::ConstBool(false)),
+                        Stmt::VarDecl(
+                            "r".to_string(),
+                            Expr::FuncCall(
+                                "frexp".to_string(),
+                                Type::Double,
+                                vec![
+                                    Expr::ConstDouble(2560.0),
+                                    Expr::VarRef("bad_exp".to_string(), Type::Bool, true),
+                                ],
                             ),
                         ),
                         Stmt::Ret(Some(Expr::ConstInt32(0))),

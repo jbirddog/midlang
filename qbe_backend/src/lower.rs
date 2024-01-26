@@ -57,6 +57,8 @@ fn lower_args(args: &[m::FuncArg]) -> Vec<FuncArg> {
 
 fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) {
     for stmt in m_stmts {
+        ctx.push_tmp_refs();
+
         match stmt {
             m::Stmt::Cond(cases) => {
                 let lbl_prefix = "cond";
@@ -78,9 +80,9 @@ fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx
 
                 stmts.push(Stmt::Lbl(end_lbl));
             }
-            m::Stmt::FuncCall(name, values) => {
-                let values = lower_exprs_to_values(values, stmts, ctx);
-                stmts.push(Stmt::FuncCall(name.to_string(), values))
+            m::Stmt::FuncCall(name, exprs) => {
+                let values = lower_exprs_to_values(exprs, stmts, ctx);
+                stmts.push(Stmt::FuncCall(name.to_string(), values));
             }
             m::Stmt::Ret(Some(expr)) => {
                 let value = lower_expr_to_value(expr, stmts, ctx);
@@ -92,6 +94,21 @@ fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx
                 stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
             }
         }
+
+        deref_tmp_refs(stmts, ctx);
+    }
+}
+
+fn deref_tmp_refs(stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) {
+    let tmp_refs = ctx.pop_tmp_refs();
+
+    for (tmp_ref_name, var_name, var_type) in tmp_refs {
+        let expr = Expr::Load(
+            var_type,
+            var_type,
+            Value::VarRef(tmp_ref_name, Type::L, Scope::Func),
+        );
+        stmts.push(Stmt::VarDecl(var_name, Scope::Func, expr));
     }
 }
 
@@ -120,13 +137,33 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
         m::Expr::FuncCall(name, r#type, exprs) => {
             let expr = lower_func_call(name, r#type, exprs, stmts, ctx);
             let r#type = expr.r#type();
-            let name = ctx.uniq_name("arg_");
+            let name = ctx.uniq_name("arg");
 
             stmts.push(Stmt::VarDecl(name.to_string(), Scope::Func, expr));
 
             Value::VarRef(name, r#type, Scope::Func)
         }
-        m::Expr::VarRef(name, r#type) => {
+        m::Expr::VarRef(name, r#type, true) => {
+            let tmp_ref_name = ctx.uniq_name("ref");
+            let r#type = lower_type(r#type);
+            let tmp_ref = (tmp_ref_name.to_string(), name.to_string(), r#type);
+
+            ctx.add_tmp_ref(tmp_ref);
+
+            stmts.push(Stmt::VarDecl(
+                tmp_ref_name.to_string(),
+                Scope::Func,
+                Expr::Alloc8(8),
+            ));
+            stmts.push(Stmt::Store(
+                r#type,
+                Value::VarRef(name.to_string(), r#type, Scope::Func),
+                Value::VarRef(tmp_ref_name.to_string(), Type::L, Scope::Func),
+            ));
+
+            Value::VarRef(tmp_ref_name.to_string(), Type::L, Scope::Func)
+        }
+        m::Expr::VarRef(name, r#type, false) => {
             Value::VarRef(name.to_string(), lower_type(r#type), Scope::Func)
         }
     }
@@ -139,7 +176,7 @@ fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> E
         | m::Expr::ConstInt32(_)
         | m::Expr::ConstInt64(_)
         | m::Expr::ConstStr(_)
-        | m::Expr::VarRef(_, _) => {
+        | m::Expr::VarRef(_, _, _) => {
             let value = lower_expr_to_value(expr, stmts, ctx);
             Expr::Value(value)
         }
@@ -169,7 +206,7 @@ fn lower_type(r#type: &m::Type) -> Type {
     match r#type {
         m::Type::Double => Type::D,
         m::Type::Bool | m::Type::Int32 => Type::W,
-        m::Type::Int64 | m::Type::Ptr | m::Type::Str => Type::L,
+        m::Type::Int64 | m::Type::Ptr(_) | m::Type::Str => Type::L,
     }
 }
 

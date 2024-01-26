@@ -2,9 +2,12 @@ use std::collections::BTreeMap;
 
 use crate::lower_lang::*;
 
+pub type TmpRef = (String, String, Type);
+
 pub struct LoweringCtx {
     prefix: String,
     pool: BTreeMap<String, String>,
+    tmp_refs: Vec<Vec<TmpRef>>,
     uniq: u32,
 }
 
@@ -13,12 +16,13 @@ impl LoweringCtx {
         LoweringCtx {
             prefix: prefix.to_string(),
             pool: Default::default(),
+            tmp_refs: Default::default(),
             uniq: 0,
         }
     }
 
     pub fn uniq_name(&mut self, prefix: &str) -> String {
-        let name = format!("{}{}", prefix, self.uniq);
+        let name = format!("..{}..{}", prefix, self.uniq);
         self.uniq += 1;
         name
     }
@@ -47,5 +51,20 @@ impl LoweringCtx {
 
     pub fn decls_len(&self) -> usize {
         self.pool.len()
+    }
+
+    pub fn add_tmp_ref(&mut self, tmp_ref: TmpRef) {
+        let i = self.tmp_refs.len() - 1;
+        self.tmp_refs[i].push(tmp_ref);
+    }
+
+    pub fn push_tmp_refs(&mut self) {
+        self.tmp_refs.push(vec![]);
+    }
+
+    pub fn pop_tmp_refs(&mut self) -> Vec<TmpRef> {
+        self.tmp_refs
+            .pop()
+            .expect("Attempting to pop when tmp_refs is empty")
     }
 }

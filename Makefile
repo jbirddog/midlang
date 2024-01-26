@@ -4,7 +4,7 @@ ME := $(MY_USER):$(MY_GROUP)
 
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
-TEST_CASE ?= hello_world
+TEST_CASE ?= frexp
 BUILD_DIR ?= build
 NINJA ?= ninja
 MLC ?= ./target/debug/mlc
@@ -13,9 +13,7 @@ DOCKER_RUN_COMMON := --env RUSTFLAGS="$(RUSTFLAGS)" --env-file ./docker.env -v .
 IN_DEV ?= docker run $(DOCKER_RUN_COMMON)
 IN_IDEV ?= docker run -it $(DOCKER_RUN_COMMON)
 
-include integration.mk
-
-all: dev-env compile tests hello-world usage
+all: dev-env compile hello_world
 
 dev-env:
 	docker build --progress=plain -t $(DOCKER_IMG) .
@@ -48,7 +46,7 @@ check: fmt-check clippy-check
 clean:
 	@rm -rf $(BUILD_DIR)
 
-start: hello_world_cond
+start: $(TEST_CASE)
 	@/bin/true
 
 test-compile:
@@ -78,5 +76,7 @@ check-ownership:
 	dev-env sh \
 	compile test start clean \
 	fmt fmt-check fmt-json clippy clippy-check check \
-	check-ownership take-ownership  usage \
+	check-ownership take-ownership usage \
 	test-compile test-run
+
+include integration.mk

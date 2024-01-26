@@ -226,4 +226,29 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn frexp() -> TestResult {
+        let modules = mtc::frexp();
+
+        let mut ninja_writer = Ninja::new();
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
+        assert_eq!(ba.len(), 1);
+        assert_eq!(ba[0].0, "frexp.il");
+
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("qbe")
+            .join("frexp.il");
+        let expected_il = read_to_string(&path)?;
+
+        assert_eq!(ba[0].1, expected_il);
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("frexp.il"));
+        assert!(ninja_build.contains("frexp.s"));
+        assert!(ninja_build.contains("frexp.o"));
+        assert!(ninja_build.contains("a.out"));
+
+        Ok(())
+    }
 }

@@ -1,0 +1,117 @@
+{
+  "modules": [
+    {
+      "name": "frexp",
+      "decls": [
+        {
+          "fwddecl": {
+            "name": "printf",
+            "visibility": "public",
+            "type": "int32",
+            "args": [
+              {
+                "name": "format",
+                "type": "str"
+              }
+            ],
+            "variadic": true
+          }
+        },
+        {
+          "fwddecl": {
+            "name": "frexp",
+            "visibility": "public",
+            "type": "double",
+            "args": [
+              {
+                "name": "x",
+                "type": "double"
+              },
+              {
+                "name": "exp",
+                "type": {
+                  "ptr": {
+                    "to": "int32"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "funcdecl": {
+            "name": "main",
+            "visibility": "public",
+            "type": "int32",
+            "args": [],
+            "variadic": false,
+            "stmts": [
+              {
+                "vardecl": {
+                  "name": "exp",
+                  "type": "int32",
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              },
+              {
+                "funccall": {
+                  "name": "frexp",
+                  "args": [
+                    {
+                      "const": {
+                        "value": 2560,
+                        "type": "double"
+                      }
+                    },
+                    {
+                      "varref": {
+                        "name": "exp",
+                        "type": "int32",
+                        "byref": true
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "funccall": {
+                  "name": "printf",
+                  "type": "int32",
+                  "args": [
+                    {
+                      "const": {
+                        "value": "frexp(2560.0, &e); e = %d\n",
+                        "type": "str"
+                      }
+                    },
+                    {
+                      "varref": {
+                        "name": "exp",
+                        "type": "int32"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ret": {
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

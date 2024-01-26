@@ -145,7 +145,7 @@ pub fn var_ref() -> Vec<Module> {
             false,
             vec![
                 Stmt::VarDecl("x".to_string(), Expr::ConstInt32(0)),
-                Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32))),
+                Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32, false))),
             ],
         )],
     }]

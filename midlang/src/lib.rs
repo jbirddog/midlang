@@ -33,7 +33,7 @@ pub enum Expr {
     ConstInt64(i64),
     ConstStr(String),
     FuncCall(String, Type, Vec<Expr>),
-    VarRef(String, Type),
+    VarRef(String, Type, bool),
 }
 
 #[derive(PartialEq)]
@@ -48,7 +48,7 @@ pub enum Type {
     Double,
     Int32,
     Int64,
-    Ptr,
+    Ptr(Option<Box<Type>>),
     Str,
 }
 
@@ -61,7 +61,7 @@ impl Expr {
             Self::ConstInt64(_) => &Type::Int64,
             Self::ConstStr(_) => &Type::Str,
             Self::FuncCall(_, r#type, _) => r#type,
-            Self::VarRef(_, r#type) => r#type,
+            Self::VarRef(_, r#type, _) => r#type,
         }
     }
 }

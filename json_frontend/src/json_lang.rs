@@ -72,6 +72,7 @@ pub enum Expr {
     VarRef {
         name: String,
         r#type: Type,
+        byref: Option<bool>,
     },
 }
 
@@ -89,6 +90,7 @@ pub enum Type {
     Double,
     Int32,
     Int64,
-    Ptr,
+    Ptr { to: Box<Type> },
     Str,
+    VoidPtr,
 }
