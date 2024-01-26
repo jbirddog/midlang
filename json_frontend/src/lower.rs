@@ -77,7 +77,8 @@ fn lower_type(r#type: &Type) -> m::Type {
         Type::Double => m::Type::Double,
         Type::Int32 => m::Type::Int32,
         Type::Int64 => m::Type::Int64,
-        Type::Ptr => m::Type::Ptr,
+        Type::Ptr { to: r#type } => m::Type::Ptr(Some(Box::new(lower_type(r#type)))),
+        Type::VoidPtr => m::Type::Ptr(None),
         Type::Str => m::Type::Str,
     }
 }
@@ -132,7 +133,15 @@ fn lower_expr(expr: &Expr) -> Res<m::Expr> {
             lower_type(r#type),
             lower_exprs(args)?,
         )),
-        Expr::VarRef { name, r#type } => Ok(m::Expr::VarRef(name.to_string(), lower_type(r#type))),
+        Expr::VarRef {
+            name,
+            r#type,
+            byref,
+        } => Ok(m::Expr::VarRef(
+            name.to_string(),
+            lower_type(r#type),
+            byref.unwrap_or(false),
+        )),
     }
 }
 

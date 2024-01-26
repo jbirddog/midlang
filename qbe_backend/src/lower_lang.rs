@@ -28,10 +28,13 @@ pub enum Stmt {
     Jnz(Value, String, String),
     Lbl(String),
     Ret(Option<Value>),
+    Store(Type, Value, Value),
     VarDecl(String, Scope, Expr),
 }
 
 pub enum Expr {
+    Alloc8(usize),
+    Load(Type, Type, Value),
     Value(Value),
     FuncCall(String, Type, Vec<Value>),
 }
@@ -67,6 +70,8 @@ pub trait Typed {
 impl Typed for Expr {
     fn r#type(&self) -> Type {
         match self {
+            Expr::Alloc8(_) => Type::L,
+            Expr::Load(r#type, _, _) => *r#type,
             Expr::Value(value) => value.r#type(),
             Expr::FuncCall(_, r#type, _) => *r#type,
         }

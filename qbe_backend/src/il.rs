@@ -133,6 +133,12 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
                 append_value_il(value, RENDER_VALUE_PLAIN, il)?;
             }
             Stmt::Ret(None) => write!(il, "{}ret", INDENT)?,
+            Stmt::Store(r#type, src, dest) => {
+                write!(il, "{}store{} ", INDENT, r#type)?;
+                append_value_il(src, RENDER_VALUE_PLAIN, il)?;
+                il.write_str(", ")?;
+                append_value_il(dest, RENDER_VALUE_PLAIN, il)?;
+            }
             Stmt::VarDecl(name, scope, expr) => {
                 write!(il, "{}{}{} ={} ", INDENT, scope, name, expr.r#type())?;
                 append_expr_il(expr, RENDER_VALUE_COPY_LITERALS, il)?;
@@ -147,6 +153,11 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
 
 fn append_expr_il(expr: &Expr, value_render_flags: u8, il: &mut impl Write) -> fmt::Result {
     match expr {
+        Expr::Alloc8(bytes) => write!(il, "alloc8 {}", bytes)?,
+        Expr::Load(_, r#type, value) => {
+            write!(il, "load{} ", r#type)?;
+            append_value_il(value, value_render_flags, il)?;
+        }
         Expr::Value(value) => append_value_il(value, value_render_flags, il)?,
         Expr::FuncCall(name, _, values) => append_func_call_il(name, values, false, il)?,
     }
