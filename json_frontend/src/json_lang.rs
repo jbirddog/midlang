@@ -60,6 +60,10 @@ pub struct Case {
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Expr {
+    Eq {
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
+    },
     Const {
         value: Value,
         r#type: Type,
@@ -68,6 +72,10 @@ pub enum Expr {
         name: String,
         r#type: Type,
         args: Vec<Expr>,
+    },
+    Ne {
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
     },
     VarRef {
         name: String,

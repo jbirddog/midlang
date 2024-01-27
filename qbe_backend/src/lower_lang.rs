@@ -34,6 +34,7 @@ pub enum Stmt {
 
 pub enum Expr {
     Alloc8(usize),
+    Cmp(Op, Value, Value),
     Load(Type, Type, Value),
     Value(Value),
     FuncCall(String, Type, Vec<Value>),
@@ -63,6 +64,11 @@ pub enum Scope {
     Global,
 }
 
+pub enum Op {
+    Eq,
+    Ne,
+}
+
 pub trait Typed {
     fn r#type(&self) -> Type;
 }
@@ -71,6 +77,7 @@ impl Typed for Expr {
     fn r#type(&self) -> Type {
         match self {
             Expr::Alloc8(_) => Type::L,
+            Expr::Cmp(_, _, _) => Type::W,
             Expr::Load(r#type, _, _) => *r#type,
             Expr::Value(value) => value.r#type(),
             Expr::FuncCall(_, r#type, _) => *r#type,
@@ -93,6 +100,15 @@ impl Display for Linkage {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::Export => write!(f, "export"),
+        }
+    }
+}
+
+impl Display for Op {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Eq => write!(f, "eq"),
+            Self::Ne => write!(f, "ne"),
         }
     }
 }

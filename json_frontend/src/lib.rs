@@ -89,4 +89,16 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn cmp() -> TestResult {
+        let path = Path::new(env!("TEST_CASES_DIR"))
+            .join("json")
+            .join("cmp.json");
+        let filename = &path.display().to_string();
+
+        new(&filename).parse()?;
+
+        Ok(())
+    }
 }

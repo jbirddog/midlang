@@ -4,7 +4,7 @@ ME := $(MY_USER):$(MY_GROUP)
 
 RUSTFLAGS ?=
 TEST_CASES_DIR ?= test_cases
-TEST_CASE ?= frexp
+TEST_CASE ?= cmp
 BUILD_DIR ?= build
 NINJA ?= ninja
 MLC ?= ./target/debug/mlc

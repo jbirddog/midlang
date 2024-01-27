@@ -251,4 +251,27 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn cmp() -> TestResult {
+        let modules = mtc::cmp();
+
+        let mut ninja_writer = Ninja::new();
+        let ba = generate_build_artifacts(&modules, &mut ninja_writer)?;
+        assert_eq!(ba.len(), 1);
+        assert_eq!(ba[0].0, "cmp.il");
+
+        let path = Path::new(env!("TEST_CASES_DIR")).join("qbe").join("cmp.il");
+        let expected_il = read_to_string(&path)?;
+
+        assert_eq!(ba[0].1, expected_il);
+
+        let ninja_build = ninja_writer.to_string();
+        assert!(ninja_build.contains("cmp.il"));
+        assert!(ninja_build.contains("cmp.s"));
+        assert!(ninja_build.contains("cmp.o"));
+        assert!(ninja_build.contains("a.out"));
+
+        Ok(())
+    }
 }
