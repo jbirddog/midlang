@@ -154,6 +154,12 @@ fn append_stmts_il(stmts: &[Stmt], il: &mut impl Write) -> fmt::Result {
 fn append_expr_il(expr: &Expr, value_render_flags: u8, il: &mut impl Write) -> fmt::Result {
     match expr {
         Expr::Alloc8(bytes) => write!(il, "alloc8 {}", bytes)?,
+        Expr::Cmp(op, lhs, rhs) => {
+            write!(il, "c{}{} ", op, lhs.r#type())?;
+            append_value_il(lhs, RENDER_VALUE_PLAIN, il)?;
+            il.write_str(", ")?;
+            append_value_il(rhs, RENDER_VALUE_PLAIN, il)?;
+        }
         Expr::Load(_, r#type, value) => {
             write!(il, "load{} ", r#type)?;
             append_value_il(value, value_render_flags, il)?;

@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 pub struct Module {
     pub name: String,
     pub decls: Vec<Decl>,
@@ -26,7 +29,9 @@ pub enum Stmt {
     VarDecl(String, Expr),
 }
 
+#[derive(Debug)]
 pub enum Expr {
+    Cmp(Op, Box<Expr>, Box<Expr>),
     ConstBool(bool),
     ConstDouble(f64),
     ConstInt32(i32),
@@ -36,13 +41,19 @@ pub enum Expr {
     VarRef(String, Type, bool),
 }
 
+#[derive(Debug)]
+pub enum Op {
+    Eq,
+    Ne,
+}
+
 #[derive(PartialEq)]
 pub enum Visibility {
     Public,
     Private,
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Bool,
     Double,
@@ -55,6 +66,7 @@ pub enum Type {
 impl Expr {
     pub fn r#type(&self) -> &Type {
         match self {
+            Self::Cmp(_, _, _) => &Type::Bool,
             Self::ConstBool(_) => &Type::Bool,
             Self::ConstDouble(_) => &Type::Double,
             Self::ConstInt32(_) => &Type::Int32,
@@ -62,6 +74,15 @@ impl Expr {
             Self::ConstStr(_) => &Type::Str,
             Self::FuncCall(_, r#type, _) => r#type,
             Self::VarRef(_, r#type, _) => r#type,
+        }
+    }
+}
+
+impl Display for Op {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Eq => write!(f, "eq"),
+            Self::Ne => write!(f, "ne"),
         }
     }
 }

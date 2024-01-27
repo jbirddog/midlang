@@ -9,7 +9,7 @@ use crate::json_lang::*;
 type Res<T> = Result<T, Box<dyn Error>>;
 
 pub fn lower(json_lang: &JSONLang) -> Res<Vec<m::Module>> {
-    let modules = match json_lang {
+    Ok(match json_lang {
         JSONLang::Modules(modules) => {
             let mut lowered = Vec::<m::Module>::with_capacity(modules.len());
 
@@ -22,9 +22,7 @@ pub fn lower(json_lang: &JSONLang) -> Res<Vec<m::Module>> {
 
             lowered
         }
-    };
-
-    Ok(modules)
+    })
 }
 
 fn lower_decls(decls: &[Decl]) -> Res<Vec<m::Decl>> {
@@ -32,20 +30,20 @@ fn lower_decls(decls: &[Decl]) -> Res<Vec<m::Decl>> {
 }
 
 fn lower_decl(decl: &Decl) -> Res<m::Decl> {
-    match decl {
+    Ok(match decl {
         Decl::FwdDecl {
             name,
             visibility,
             r#type,
             args,
             variadic,
-        } => Ok(m::Decl::FwdDecl(
+        } => m::Decl::FwdDecl(
             name.to_string(),
             lower_visibility(visibility),
             lower_opt_type(r#type),
             lower_args(args),
             variadic.unwrap_or(false),
-        )),
+        ),
         Decl::FuncDecl {
             name,
             visibility,
@@ -53,15 +51,15 @@ fn lower_decl(decl: &Decl) -> Res<m::Decl> {
             args,
             variadic,
             stmts,
-        } => Ok(m::Decl::FuncDecl(
+        } => m::Decl::FuncDecl(
             name.to_string(),
             lower_visibility(visibility),
             lower_opt_type(r#type),
             lower_args(args),
             variadic.unwrap_or(false),
             lower_stmts(stmts)?,
-        )),
-    }
+        ),
+    })
 }
 
 fn lower_visibility(visibility: &Visibility) -> m::Visibility {
@@ -98,15 +96,13 @@ fn lower_stmts(stmts: &[Stmt]) -> Res<Vec<m::Stmt>> {
 }
 
 fn lower_stmt(stmt: &Stmt) -> Res<m::Stmt> {
-    match stmt {
-        Stmt::Cond { cases } => Ok(m::Stmt::Cond(lower_cases(cases)?)),
-        Stmt::FuncCall { name, args } => {
-            Ok(m::Stmt::FuncCall(name.to_string(), lower_exprs(args)?))
-        }
-        Stmt::Ret { value: Some(value) } => Ok(m::Stmt::Ret(Some(lower_expr(value)?))),
-        Stmt::Ret { value: None } => Ok(m::Stmt::Ret(None)),
-        Stmt::VarDecl { name, value } => Ok(m::Stmt::VarDecl(name.to_string(), lower_expr(value)?)),
-    }
+    Ok(match stmt {
+        Stmt::Cond { cases } => m::Stmt::Cond(lower_cases(cases)?),
+        Stmt::FuncCall { name, args } => m::Stmt::FuncCall(name.to_string(), lower_exprs(args)?),
+        Stmt::Ret { value: Some(value) } => m::Stmt::Ret(Some(lower_expr(value)?)),
+        Stmt::Ret { value: None } => m::Stmt::Ret(None),
+        Stmt::VarDecl { name, value } => m::Stmt::VarDecl(name.to_string(), lower_expr(value)?),
+    })
 }
 
 fn lower_cases(cases: &[Case]) -> Res<Vec<m::Case>> {
@@ -121,28 +117,34 @@ fn lower_exprs(exprs: &[Expr]) -> Res<Vec<m::Expr>> {
 }
 
 fn lower_expr(expr: &Expr) -> Res<m::Expr> {
-    match expr {
+    Ok(match expr {
+        Expr::Eq { lhs, rhs } => m::Expr::Cmp(
+            m::Op::Eq,
+            Box::new(lower_expr(lhs)?),
+            Box::new(lower_expr(rhs)?),
+        ),
         Expr::Const { value, r#type } => match (value, r#type) {
-            (Value::Bool(b), Type::Bool) => Ok(m::Expr::ConstBool(*b)),
-            (Value::Number(n), _) => Ok(lower_number(n, r#type)?),
-            (Value::String(s), Type::Str) => Ok(m::Expr::ConstStr(s.to_string())),
-            _ => Err(Box::from("Unsupported value and type")),
+            (Value::Bool(b), Type::Bool) => m::Expr::ConstBool(*b),
+            (Value::Number(n), _) => lower_number(n, r#type)?,
+            (Value::String(s), Type::Str) => m::Expr::ConstStr(s.to_string()),
+            _ => {
+                return Err(Box::from("Unsupported value and type"));
+            }
         },
-        Expr::FuncCall { name, r#type, args } => Ok(m::Expr::FuncCall(
-            name.to_string(),
-            lower_type(r#type),
-            lower_exprs(args)?,
-        )),
+        Expr::FuncCall { name, r#type, args } => {
+            m::Expr::FuncCall(name.to_string(), lower_type(r#type), lower_exprs(args)?)
+        }
+        Expr::Ne { lhs, rhs } => m::Expr::Cmp(
+            m::Op::Ne,
+            Box::new(lower_expr(lhs)?),
+            Box::new(lower_expr(rhs)?),
+        ),
         Expr::VarRef {
             name,
             r#type,
             byref,
-        } => Ok(m::Expr::VarRef(
-            name.to_string(),
-            lower_type(r#type),
-            byref.unwrap_or(false),
-        )),
-    }
+        } => m::Expr::VarRef(name.to_string(), lower_type(r#type), byref.unwrap_or(false)),
+    })
 }
 
 fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> {
@@ -163,10 +165,12 @@ fn lower_number(num: &serde_json::value::Number, r#type: &Type) -> Res<m::Expr> 
             .ok_or_else(|| Box::from("Number is not a Double"))
     }
 
-    match (num, r#type) {
-        (n, Type::Double) => Ok(m::Expr::ConstDouble(as_f64(n)?)),
-        (n, Type::Int32) => Ok(m::Expr::ConstInt32(as_i32(n)?)),
-        (n, Type::Int64) => Ok(m::Expr::ConstInt64(as_i64(n)?)),
-        _ => Err(Box::from("Invalid number value and type")),
-    }
+    Ok(match (num, r#type) {
+        (n, Type::Double) => m::Expr::ConstDouble(as_f64(n)?),
+        (n, Type::Int32) => m::Expr::ConstInt32(as_i32(n)?),
+        (n, Type::Int64) => m::Expr::ConstInt64(as_i64(n)?),
+        _ => {
+            return Err(Box::from("Invalid number value and type"));
+        }
+    })
 }

@@ -125,6 +125,18 @@ fn lower_exprs_to_values(
 
 fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Value {
     match expr {
+        m::Expr::Cmp(op, lhs, rhs) => {
+            let var_name = ctx.uniq_name("cmp");
+            let expr = Expr::Cmp(
+                lower_op(op),
+                lower_expr_to_value(lhs, stmts, ctx),
+                lower_expr_to_value(rhs, stmts, ctx),
+            );
+
+            stmts.push(Stmt::VarDecl(var_name.to_string(), Scope::Func, expr));
+
+            Value::VarRef(var_name.to_string(), Type::W, Scope::Func)
+        }
         m::Expr::ConstBool(true) => Value::ConstW(1),
         m::Expr::ConstBool(false) => Value::ConstW(0),
         m::Expr::ConstDouble(d) => Value::ConstD(*d),
@@ -171,6 +183,11 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
 
 fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> Expr {
     match expr {
+        m::Expr::Cmp(op, lhs, rhs) => Expr::Cmp(
+            lower_op(op),
+            lower_expr_to_value(lhs, stmts, ctx),
+            lower_expr_to_value(rhs, stmts, ctx),
+        ),
         m::Expr::ConstBool(_)
         | m::Expr::ConstDouble(_)
         | m::Expr::ConstInt32(_)
@@ -212,6 +229,13 @@ fn lower_type(r#type: &m::Type) -> Type {
 
 fn lower_opt_type(r#type: &Option<m::Type>) -> Option<Type> {
     r#type.as_ref().map(lower_type)
+}
+
+fn lower_op(op: &m::Op) -> Op {
+    match op {
+        m::Op::Eq => Op::Eq,
+        m::Op::Ne => Op::Ne,
+    }
 }
 
 fn lbl(name: &str) -> Stmt {

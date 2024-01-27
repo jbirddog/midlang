@@ -88,6 +88,8 @@ fn check_stmts<'a>(
                     if *expr.r#type() != Type::Bool {
                         return Err("Cond case expressions must be of type bool".into());
                     }
+                    check_expr(expr, fwd_decls, vars)?;
+
                     let mut cond_vars = vars.clone();
                     check_stmts(stmts, func_type, fwd_decls, &mut cond_vars)?;
                 }
@@ -146,6 +148,15 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
     }
 
     match expr {
+        Expr::Cmp(op, lhs, rhs) => {
+            if lhs.r#type() != rhs.r#type() {
+                return Err(format!(
+                    "Comparison '{}' has different left hand and right hand side types",
+                    op
+                )
+                .into());
+            }
+        }
         Expr::ConstBool(_)
         | Expr::ConstDouble(_)
         | Expr::ConstInt32(_)
@@ -285,6 +296,15 @@ mod tests {
     #[test]
     fn frexp() -> TestResult {
         let modules = mtc::frexp();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn cmp() -> TestResult {
+        let modules = mtc::cmp();
 
         type_check(&modules)?;
 
@@ -940,6 +960,62 @@ mod tests {
                     ],
                 ),
             ],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Comparison 'eq' has different left hand and right hand side types")]
+    fn cmp_eq_type_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Some(Type::Int32),
+                vec![],
+                false,
+                vec![
+                    Stmt::VarDecl(
+                        "bad_eq".to_string(),
+                        Expr::Cmp(
+                            Op::Eq,
+                            Box::new(Expr::ConstBool(true)),
+                            Box::new(Expr::ConstInt32(11)),
+                        ),
+                    ),
+                    Stmt::Ret(Some(Expr::ConstInt32(0))),
+                ],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Comparison 'ne' has different left hand and right hand side types")]
+    fn cmp_ne_type_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Some(Type::Int32),
+                vec![],
+                false,
+                vec![
+                    Stmt::VarDecl(
+                        "bad_ne".to_string(),
+                        Expr::Cmp(
+                            Op::Ne,
+                            Box::new(Expr::ConstBool(true)),
+                            Box::new(Expr::ConstInt32(11)),
+                        ),
+                    ),
+                    Stmt::Ret(Some(Expr::ConstInt32(0))),
+                ],
+            )],
         }];
 
         type_check(&modules).unwrap();
