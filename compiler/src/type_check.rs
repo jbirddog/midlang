@@ -231,8 +231,8 @@ mod tests {
     }
 
     #[test]
-    fn hello_world_cond() -> TestResult {
-        let modules = mtc::hello_world_cond();
+    fn cond() -> TestResult {
+        let modules = mtc::cond();
 
         type_check(&modules)?;
 
