@@ -61,7 +61,7 @@ fn lower_stmts(m_stmts: &[m::Stmt], stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx
 
         match stmt {
             m::Stmt::Cond(cases) => {
-                let lbl_prefix = "cond";
+                let lbl_prefix = ctx.uniq_name("cond");
                 let end_lbl = format!("{}_end", lbl_prefix);
 
                 for (i, (expr, case_stmts)) in cases.iter().enumerate() {

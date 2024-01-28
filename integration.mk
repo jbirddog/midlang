@@ -1,10 +1,10 @@
 TESTS := \
 	hello_world \
 	hello_world2 \
-	hello_world_cond \
 	fabs \
 	frexp \
-	cmp
+	cmp \
+	cond
 
 $(TESTS):
 	make TEST_CASE=$@ test-compile test-run && \
