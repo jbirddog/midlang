@@ -27,8 +27,7 @@
                 "name": "x",
                 "type": "double"
               }
-            ],
-            "variadic": true
+            ]
           }
         },
         {
