@@ -10,7 +10,7 @@
             "type": "int32",
             "args": [
               {
-                "name": "format",
+                "name": "fmt",
                 "type": "str"
               }
             ],
@@ -35,7 +35,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "variadic": true
           }
         },
         {
@@ -44,12 +45,10 @@
             "visibility": "public",
             "type": "int32",
             "args": [],
-            "variadic": false,
             "stmts": [
               {
                 "vardecl": {
                   "name": "exp",
-                  "type": "int32",
                   "value": {
                     "const": {
                       "value": 0,
@@ -64,7 +63,7 @@
                   "args": [
                     {
                       "const": {
-                        "value": 2560,
+                        "value": 2560.0,
                         "type": "double"
                       }
                     },
@@ -81,7 +80,6 @@
               {
                 "funccall": {
                   "name": "printf",
-                  "type": "int32",
                   "args": [
                     {
                       "const": {

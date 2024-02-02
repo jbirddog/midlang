@@ -16,7 +16,7 @@ pub fn fabs() -> Vec<Module> {
                 Visibility::Public,
                 Some(Type::Double),
                 vec![("x".to_string(), Type::Double)],
-                true,
+                false,
             ),
             Decl::FuncDecl(
                 "main".to_string(),

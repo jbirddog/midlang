@@ -34,7 +34,6 @@
             "visibility": "public",
             "type": "int32",
             "args": [],
-            "variadic": false,
             "stmts": [
               {
                 "cond": {
@@ -144,7 +143,6 @@
               {
                 "funccall": {
                   "name": "puts",
-                  "type": "int32",
                   "args": [
                     {
                       "const": {
