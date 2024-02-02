@@ -10,7 +10,7 @@
             "type": "int32",
             "args": [
               {
-                "name": "format",
+                "name": "fmt",
                 "type": "str"
               }
             ],
@@ -27,7 +27,8 @@
                 "name": "x",
                 "type": "double"
               }
-            ]
+            ],
+            "variadic": true
           }
         },
         {
@@ -36,12 +37,10 @@
             "visibility": "public",
             "type": "int32",
             "args": [],
-            "variadic": false,
             "stmts": [
               {
                 "funccall": {
                   "name": "printf",
-                  "type": "int32",
                   "args": [
                     {
                       "const": {

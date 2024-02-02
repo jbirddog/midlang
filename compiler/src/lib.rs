@@ -11,10 +11,12 @@ mod type_check;
 use crate::type_check::type_check;
 use midlang::Module;
 
-pub type FrontendResult = Result<Vec<Module>, Box<dyn Error>>;
+pub type FrontendLowerResult = Result<Vec<Module>, Box<dyn Error>>;
+pub type FrontendRaiseResult = Result<(), Box<dyn Error>>;
 
 pub trait Frontend {
-    fn parse(&self) -> FrontendResult;
+    fn lower(&self) -> FrontendLowerResult;
+    fn raise(&self, modules: &[Module]) -> FrontendRaiseResult;
 }
 
 pub type BuildArtifacts = Vec<(String, String)>;
@@ -51,7 +53,7 @@ pub fn new<'a>(
 
 impl Compiler<'_> {
     pub fn compile(&self) -> Result<(), Box<dyn Error>> {
-        let modules = self.frontend.parse()?;
+        let modules = self.frontend.lower()?;
         type_check(&modules)?;
 
         let mut ninja_writer = Ninja::new();

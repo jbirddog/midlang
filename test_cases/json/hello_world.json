@@ -22,7 +22,6 @@
             "visibility": "public",
             "type": "int32",
             "args": [],
-            "variadic": false,
             "stmts": [
               {
                 "vardecl": {
