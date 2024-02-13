@@ -4,7 +4,8 @@ TESTS := \
 	fabs \
 	frexp \
 	cmp \
-	cond
+	cond \
+	not
 
 $(TESTS):
 	make TEST_CASE=$@ test-compile test-run && \

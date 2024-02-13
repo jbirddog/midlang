@@ -1,0 +1,174 @@
+{
+  "modules": [
+    {
+      "name": "not",
+      "decls": [
+        {
+          "fwddecl": {
+            "name": "puts",
+            "visibility": "public",
+            "type": "int32",
+            "args": [
+              {
+                "name": "s",
+                "type": "str"
+              }
+            ]
+          }
+        },
+        {
+          "fwddecl": {
+            "name": "exit",
+            "visibility": "public",
+            "args": [
+              {
+                "name": "status",
+                "type": "int32"
+              }
+            ]
+          }
+        },
+        {
+          "funcdecl": {
+            "name": "main",
+            "visibility": "public",
+            "type": "int32",
+            "args": [],
+            "stmts": [
+              {
+                "cond": {
+                  "cases": [
+                    {
+                      "expr": {
+                        "not": {
+                          "expr": {
+                            "const": {
+                              "value": true,
+                              "type": "bool"
+                            }
+                          }
+                        }
+                      },
+                      "stmts": [
+                        {
+                          "funccall": {
+                            "name": "exit",
+                            "args": [
+                              {
+                                "const": {
+                                  "value": 1,
+                                  "type": "int32"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "expr": {
+                        "not": {
+                          "expr": {
+                            "ne": {
+                              "lhs": {
+                                "const": {
+                                  "value": 12,
+                                  "type": "int32"
+                                }
+                              },
+                              "rhs": {
+                                "const": {
+                                  "value": 21,
+                                  "type": "int32"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "stmts": [
+                        {
+                          "funccall": {
+                            "name": "exit",
+                            "args": [
+                              {
+                                "const": {
+                                  "value": 2,
+                                  "type": "int32"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "expr": {
+                        "not": {
+                          "expr": {
+                            "eq": {
+                              "lhs": {
+                                "const": {
+                                  "value": 12,
+                                  "type": "int64"
+                                }
+                              },
+                              "rhs": {
+                                "const": {
+                                  "value": 12,
+                                  "type": "int64"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "stmts": [
+                        {
+                          "funccall": {
+                            "name": "exit",
+                            "args": [
+                              {
+                                "const": {
+                                  "value": 3,
+                                  "type": "int32"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "funccall": {
+                  "name": "puts",
+                  "args": [
+                    {
+                      "const": {
+                        "value": "not works!",
+                        "type": "str"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ret": {
+                  "value": {
+                    "const": {
+                      "value": 0,
+                      "type": "int32"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

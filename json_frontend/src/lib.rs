@@ -111,4 +111,9 @@ mod tests {
     fn cmp() -> TestResult {
         test!(cmp)
     }
+
+    #[test]
+    fn not() -> TestResult {
+        test!(not)
+    }
 }
