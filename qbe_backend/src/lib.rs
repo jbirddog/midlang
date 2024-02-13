@@ -284,9 +284,7 @@ mod tests {
         assert_eq!(ba.len(), 1);
         assert_eq!(ba[0].0, "not.il");
 
-        let path = Path::new(env!("TEST_CASES_DIR"))
-            .join("qbe")
-            .join("not.il");
+        let path = Path::new(env!("TEST_CASES_DIR")).join("qbe").join("not.il");
         let expected_il = read_to_string(&path)?;
 
         assert_eq!(ba[0].1, expected_il);

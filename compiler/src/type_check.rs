@@ -205,7 +205,9 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
         }
         Expr::Not(expr) => {
             if *expr.r#type() != Type::Bool {
-                return Err(format!("Expression passed to not must be of type bool").into());
+                return Err("Expression passed to not must be of type bool"
+                    .to_string()
+                    .into());
             }
         }
         Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
@@ -310,6 +312,15 @@ mod tests {
     #[test]
     fn cmp() -> TestResult {
         let modules = mtc::cmp();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn not() -> TestResult {
+        let modules = mtc::not();
 
         type_check(&modules)?;
 
@@ -488,6 +499,27 @@ mod tests {
                 vec![
                     Stmt::VarDecl("x".to_string(), Expr::ConstBool(true)),
                     Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32, false))),
+                ],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Expression passed to not must be of type bool")]
+    fn not_expr_type_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Some(Type::Int32),
+                vec![],
+                false,
+                vec![
+                    Stmt::VarDecl("x".to_string(), Expr::Not(Box::new(Expr::ConstInt32(3)))),
+                    Stmt::Ret(Some(Expr::ConstInt32(0))),
                 ],
             )],
         }];
