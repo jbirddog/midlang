@@ -162,13 +162,6 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
         | Expr::ConstInt32(_)
         | Expr::ConstInt64(_)
         | Expr::ConstStr(_) => (),
-        Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
-            Some(expr_type) if *expr_type != r#type => {
-                return Err(format!("VarRef '{}' type does not match its declaration", name).into())
-            }
-            Some(_) => (),
-            None => return Err(format!("VarRef '{}' does not have a declaration", name).into()),
-        },
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
                 Some((_, None, _, _)) => {
@@ -210,6 +203,18 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
 
             check_exprs(exprs, fwd_decls, vars)?;
         }
+        Expr::Not(expr) => {
+            if *expr.r#type() != Type::Bool {
+                return Err(format!("Expression passed to not must be of type bool").into());
+            }
+        }
+        Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
+            Some(expr_type) if *expr_type != r#type => {
+                return Err(format!("VarRef '{}' type does not match its declaration", name).into())
+            }
+            Some(_) => (),
+            None => return Err(format!("VarRef '{}' does not have a declaration", name).into()),
+        },
     }
 
     Ok(())

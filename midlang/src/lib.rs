@@ -38,6 +38,7 @@ pub enum Expr {
     ConstInt64(i64),
     ConstStr(String),
     FuncCall(String, Type, Vec<Expr>),
+    Not(Box<Expr>),
     VarRef(String, Type, bool),
 }
 
@@ -73,6 +74,7 @@ impl Expr {
             Self::ConstInt64(_) => &Type::Int64,
             Self::ConstStr(_) => &Type::Str,
             Self::FuncCall(_, r#type, _) => r#type,
+            Self::Not(_) => &Type::Bool,
             Self::VarRef(_, r#type, _) => r#type,
         }
     }

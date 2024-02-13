@@ -118,6 +118,9 @@ fn raise_expr(expr: &m::Expr) -> Expr {
             r#type: raise_type(r#type),
             args: raise_exprs(args),
         },
+        m::Expr::Not(expr) => Expr::Not {
+            expr: Box::new(raise_expr(expr)),
+        },
         m::Expr::VarRef(name, r#type, byref) => Expr::VarRef {
             name: name.to_string(),
             r#type: raise_type(r#type),

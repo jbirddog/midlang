@@ -155,6 +155,15 @@ fn lower_expr_to_value(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut Lowering
 
             Value::VarRef(name, r#type, Scope::Func)
         }
+        m::Expr::Not(expr) => {
+            let var_name = ctx.uniq_name("not");
+            let value = lower_expr_to_value(expr, stmts, ctx);
+            let expr = Expr::Sub(Value::ConstW(1), value);
+
+            stmts.push(Stmt::VarDecl(var_name.to_string(), Scope::Func, expr));
+
+            Value::VarRef(var_name.to_string(), Type::W, Scope::Func)
+        }
         m::Expr::VarRef(name, r#type, true) => {
             let tmp_ref_name = ctx.uniq_name("ref");
             let r#type = lower_type(r#type);
@@ -196,6 +205,10 @@ fn lower_expr(expr: &m::Expr, stmts: &mut Vec<Stmt>, ctx: &mut LoweringCtx) -> E
         | m::Expr::VarRef(_, _, _) => {
             let value = lower_expr_to_value(expr, stmts, ctx);
             Expr::Value(value)
+        }
+        m::Expr::Not(_) => {
+            let value = lower_expr_to_value(expr, stmts, ctx);
+            Expr::Sub(Value::ConstW(1), value)
         }
         m::Expr::FuncCall(name, r#type, exprs) => lower_func_call(name, r#type, exprs, stmts, ctx),
     }

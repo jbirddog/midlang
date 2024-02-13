@@ -164,6 +164,12 @@ fn append_expr_il(expr: &Expr, value_render_flags: u8, il: &mut impl Write) -> f
             write!(il, "load{} ", r#type)?;
             append_value_il(value, value_render_flags, il)?;
         }
+        Expr::Sub(value1, value2) => {
+            il.write_str("sub ")?;
+            append_value_il(value1, RENDER_VALUE_PLAIN, il)?;
+            il.write_str(", ")?;
+            append_value_il(value2, RENDER_VALUE_PLAIN, il)?;
+        }
         Expr::Value(value) => append_value_il(value, value_render_flags, il)?,
         Expr::FuncCall(name, _, values) => append_func_call_il(name, values, false, il)?,
     }
