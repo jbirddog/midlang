@@ -162,13 +162,6 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
         | Expr::ConstInt32(_)
         | Expr::ConstInt64(_)
         | Expr::ConstStr(_) => (),
-        Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
-            Some(expr_type) if *expr_type != r#type => {
-                return Err(format!("VarRef '{}' type does not match its declaration", name).into())
-            }
-            Some(_) => (),
-            None => return Err(format!("VarRef '{}' does not have a declaration", name).into()),
-        },
         Expr::FuncCall(name, call_type, exprs) => {
             match fwd_decls.get(&name as &str) {
                 Some((_, None, _, _)) => {
@@ -210,6 +203,20 @@ fn check_expr(expr: &Expr, fwd_decls: &FwdDecls, vars: &Vars) -> Res<()> {
 
             check_exprs(exprs, fwd_decls, vars)?;
         }
+        Expr::Not(expr) => {
+            if *expr.r#type() != Type::Bool {
+                return Err("Expression passed to not must be of type bool"
+                    .to_string()
+                    .into());
+            }
+        }
+        Expr::VarRef(name, r#type, _) => match vars.get(&name as &str) {
+            Some(expr_type) if *expr_type != r#type => {
+                return Err(format!("VarRef '{}' type does not match its declaration", name).into())
+            }
+            Some(_) => (),
+            None => return Err(format!("VarRef '{}' does not have a declaration", name).into()),
+        },
     }
 
     Ok(())
@@ -305,6 +312,15 @@ mod tests {
     #[test]
     fn cmp() -> TestResult {
         let modules = mtc::cmp();
+
+        type_check(&modules)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn not() -> TestResult {
+        let modules = mtc::not();
 
         type_check(&modules)?;
 
@@ -483,6 +499,27 @@ mod tests {
                 vec![
                     Stmt::VarDecl("x".to_string(), Expr::ConstBool(true)),
                     Stmt::Ret(Some(Expr::VarRef("x".to_string(), Type::Int32, false))),
+                ],
+            )],
+        }];
+
+        type_check(&modules).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Expression passed to not must be of type bool")]
+    fn not_expr_type_mismatch() {
+        let modules = [Module {
+            name: "".to_string(),
+            decls: vec![Decl::FuncDecl(
+                "main".to_string(),
+                Visibility::Public,
+                Some(Type::Int32),
+                vec![],
+                false,
+                vec![
+                    Stmt::VarDecl("x".to_string(), Expr::Not(Box::new(Expr::ConstInt32(3)))),
+                    Stmt::Ret(Some(Expr::ConstInt32(0))),
                 ],
             )],
         }];

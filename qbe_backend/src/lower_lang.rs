@@ -36,6 +36,7 @@ pub enum Expr {
     Alloc8(usize),
     Cmp(Op, Value, Value),
     Load(Type, Type, Value),
+    Sub(Value, Value),
     Value(Value),
     FuncCall(String, Type, Vec<Value>),
 }
@@ -79,6 +80,7 @@ impl Typed for Expr {
             Expr::Alloc8(_) => Type::L,
             Expr::Cmp(_, _, _) => Type::W,
             Expr::Load(r#type, _, _) => *r#type,
+            Expr::Sub(value, _) => value.r#type(),
             Expr::Value(value) => value.r#type(),
             Expr::FuncCall(_, r#type, _) => *r#type,
         }

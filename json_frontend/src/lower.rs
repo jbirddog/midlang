@@ -139,6 +139,7 @@ fn lower_expr(expr: &Expr) -> Res<m::Expr> {
             Box::new(lower_expr(lhs)?),
             Box::new(lower_expr(rhs)?),
         ),
+        Expr::Not { expr } => m::Expr::Not(Box::new(lower_expr(expr)?)),
         Expr::VarRef {
             name,
             r#type,

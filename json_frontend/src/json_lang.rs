@@ -88,6 +88,9 @@ pub enum Expr {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
+    Not {
+        expr: Box<Expr>,
+    },
     VarRef {
         name: String,
         r#type: Type,
